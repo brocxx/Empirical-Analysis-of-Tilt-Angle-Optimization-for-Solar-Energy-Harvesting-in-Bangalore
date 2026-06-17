@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Tilt Optimization — RV College of Engineering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --amber: #F5A623;
+    --amber-dim: #c47c0a;
+    --orange: #FF6B35;
+    --bg: #080808;
+    --surface: #111111;
+    --card: #181818;
+    --border: #252525;
+    --text: #f0f0f0;
+    --muted: #888;
+    --dimmer: #555;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ─── Progress Bar ─── */
+  #progress-bar {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg, var(--amber), var(--orange));
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+  }
+
+  /* ─── Slide Counter ─── */
+  #slide-counter {
+    position: fixed; bottom: 28px; right: 36px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.08em;
+    color: var(--dimmer);
+    z-index: 100;
+    transition: opacity 0.3s;
+  }
+
+  /* ─── Nav Arrows ─── */
+  .nav-btn {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+  .nav-btn:hover { background: rgba(245,166,35,0.12); border-color: var(--amber); color: var(--amber); }
+  #btn-prev { left: 20px; }
+  #btn-next { right: 20px; }
+
+  /* ─── Slide Stage ─── */
+  #stage {
+    width: 100vw; height: 100vh;
+    position: relative; overflow: hidden;
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: 64px 80px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(20px);
+  }
+  .slide.active {
+    opacity: 1; pointer-events: all; transform: translateY(0);
+  }
+  .slide.exit {
+    opacity: 0; transform: translateY(-20px);
+  }
+
+  /* ─── Section Labels ─── */
+  .section-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-tag::before {
+    content: ''; width: 20px; height: 1px; background: var(--amber);
+  }
+
+  /* ─── Titles ─── */
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: clamp(36px, 4.5vw, 64px);
+    line-height: 1.05; letter-spacing: -0.03em;
+    color: #fff;
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: clamp(26px, 3vw, 42px);
+    line-height: 1.1; letter-spacing: -0.02em;
+    color: #fff;
+  }
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600; font-size: 16px;
+    letter-spacing: -0.01em; color: #fff;
+  }
+
+  .lead {
+    font-size: clamp(14px, 1.2vw, 18px);
+    color: var(--muted); line-height: 1.65;
+    max-width: 680px;
+  }
+
+  /* ─── Utility ─── */
+  .accent { color: var(--amber); }
+  .row { display: flex; gap: 24px; }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .spacer { flex: 1; }
+  .divider { width: 48px; height: 2px; background: var(--amber); margin: 16px 0; }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .card-sm { padding: 16px 20px; border-radius: 12px; }
+
+  /* ─── Mesh Background ─── */
+  .mesh-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 80% 50%, rgba(245,166,35,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 20% 80%, rgba(255,107,53,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 1 — COVER
+  ═══════════════════════════════════════════ */
+  #s1 {
+    justify-content: center;
+    background: var(--bg);
+  }
+  #s1 .mesh-bg {
+    background: radial-gradient(ellipse 70% 60% at 80% 40%, rgba(245,166,35,0.1) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 50% at 10% 80%, rgba(255,107,53,0.06) 0%, transparent 55%);
+  }
+  .cover-sun {
+    position: absolute; right: 80px; top: 50%; transform: translateY(-50%);
+    width: 340px; height: 340px; pointer-events: none;
+  }
+  .cover-meta {
+    display: flex; gap: 32px; margin-top: 40px; flex-wrap: wrap;
+  }
+  .meta-chip {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 16px;
+    font-size: 12px; color: var(--muted); letter-spacing: 0.04em;
+  }
+  .meta-chip span { color: var(--text); font-weight: 500; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 2 — TEAM
+  ═══════════════════════════════════════════ */
+  .team-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 8px;
+  }
+  .member-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .member-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber), var(--orange));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px;
+    color: #000; margin-bottom: 8px; flex-shrink: 0;
+  }
+  .member-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+  .member-role { font-size: 12px; color: var(--muted); }
+
+  .guide-card {
+    background: linear-gradient(135deg, rgba(245,166,35,0.08), rgba(255,107,53,0.06));
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 16px; padding: 24px;
+    grid-column: span 3;
+  }
+  .guide-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); margin-bottom: 4px; }
+  .guide-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 3 — OUTLINE
+  ═══════════════════════════════════════════ */
+  .outline-list {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;
+  }
+  .outline-item {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 20px;
+  }
+  .outline-num {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--amber); min-width: 24px; letter-spacing: 0.05em;
+  }
+  .outline-label { font-size: 14px; font-weight: 500; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 4 — INTRO
+  ═══════════════════════════════════════════ */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .stat-row { display: flex; gap: 20px; margin-top: 24px; }
+  .stat-box {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; color: var(--amber); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 5 — WHY THIS MATTERS
+  ═══════════════════════════════════════════ */
+  .impact-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px;
+  }
+  .impact-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px 20px;
+  }
+  .impact-icon { font-size: 28px; margin-bottom: 12px; }
+  .impact-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+  .impact-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 6 — LITERATURE REVIEW
+  ═══════════════════════════════════════════ */
+  .paper-grid { display: grid; gap: 12px; margin-top: 20px; }
+  .paper-card {
+    display: grid; grid-template-columns: 48px 1fr; gap: 16px; align-items: start;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+  }
+  .paper-num {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--amber);
+    margin-top: 2px;
+  }
+  .paper-title { font-weight: 500; font-size: 14px; line-height: 1.4; }
+  .paper-sub { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .paper-tag {
+    display: inline-block; margin-top: 8px;
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+    background: rgba(255,255,255,0.06); color: var(--dimmer);
+  }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 7 — GAPS
+  ═══════════════════════════════════════════ */
+  .gap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+  .gap-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    position: relative; overflow: hidden;
+  }
+  .gap-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: linear-gradient(180deg, var(--amber), var(--orange));
+    border-radius: 3px 0 0 3px;
+  }
+  .gap-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--amber); margin-bottom: 6px; letter-spacing: 0.1em; }
+  .gap-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .gap-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 8 — PROBLEM DEFINITION
+  ═══════════════════════════════════════════ */
+  .problem-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center; margin-top: 24px; }
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(245,166,35,0.1), rgba(255,107,53,0.06));
+    border: 1px solid rgba(245,166,35,0.25);
+    border-radius: 20px; padding: 32px;
+  }
+  .hl-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 16px; }
+  .hl-point { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+  .hl-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-top: 7px; flex-shrink: 0; }
+  .hl-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 9 — OBJECTIVES
+  ═══════════════════════════════════════════ */
+  .obj-list { display: grid; gap: 12px; margin-top: 24px; }
+  .obj-item {
+    display: flex; gap: 20px; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 24px;
+    transition: border-color 0.2s;
+  }
+  .obj-item:hover { border-color: rgba(245,166,35,0.3); }
+  .obj-icon { font-size: 22px; min-width: 36px; text-align: center; }
+  .obj-content h3 { font-size: 15px; margin-bottom: 3px; }
+  .obj-content p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 10 — SENSORS
+  ═══════════════════════════════════════════ */
+  .sensor-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-top: 16px; }
+  .sensor-table th {
+    text-align: left; font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--dimmer); padding: 0 20px 4px; font-weight: 400;
+  }
+  .sensor-table td {
+    padding: 16px 20px; font-size: 13px; line-height: 1.5;
+    background: var(--card); border: 1px solid var(--border);
+  }
+  .sensor-table td:first-child { border-radius: 12px 0 0 12px; border-right: none; }
+  .sensor-table td:nth-child(2) { border-left: none; border-right: none; }
+  .sensor-table td:last-child { border-radius: 0 12px 12px 0; border-left: none; color: var(--muted); font-size: 12px; }
+  .sensor-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; }
+  .sensor-model { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--amber); margin-top: 2px; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 11 — METHODOLOGY FLOWCHART
+  ═══════════════════════════════════════════ */
+  .flow-container { display: flex; align-items: center; gap: 0; margin-top: 28px; overflow-x: auto; }
+  .flow-node {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px; min-width: 150px;
+    text-align: center; flex-shrink: 0;
+  }
+  .flow-node.highlight {
+    background: linear-gradient(135deg, rgba(245,166,35,0.12), rgba(255,107,53,0.08));
+    border-color: rgba(245,166,35,0.3);
+  }
+  .flow-icon { font-size: 24px; margin-bottom: 8px; }
+  .flow-label { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 12px; line-height: 1.3; }
+  .flow-sub { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .flow-arrow {
+    width: 32px; text-align: center; color: var(--amber);
+    font-size: 18px; flex-shrink: 0;
+  }
+  .method-vars {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;
+  }
+  .var-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .var-badge {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 20px; margin-top: 2px; flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+  .indep { background: rgba(245,166,35,0.12); color: var(--amber); }
+  .dep { background: rgba(255,107,53,0.12); color: var(--orange); }
+  .var-text { font-size: 13px; line-height: 1.5; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 12 — OUTCOMES
+  ═══════════════════════════════════════════ */
+  .outcome-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 24px; }
+  .outcome-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px 18px;
+  }
+  .outcome-icon { font-size: 26px; margin-bottom: 10px; }
+  .outcome-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .outcome-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 13 — TIMELINE
+  ═══════════════════════════════════════════ */
+  .timeline { margin-top: 28px; position: relative; }
+  .tl-track {
+    height: 2px; background: var(--border);
+    position: relative; margin: 0 0 0 0;
+  }
+  .tl-fill {
+    height: 100%; width: 60%; background: linear-gradient(90deg, var(--amber), var(--orange));
+  }
+  .tl-phases { display: flex; margin-top: 20px; gap: 8px; }
+  .tl-phase {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; flex: 1;
+  }
+  .tl-phase.done { border-color: rgba(245,166,35,0.25); }
+  .tl-week { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--amber); margin-bottom: 4px; }
+  .tl-task { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+  .tl-detail { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .tl-status {
+    display: inline-block; margin-top: 6px;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 2px 8px; border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+  .done-badge { background: rgba(34,197,94,0.1); color: #4ade80; }
+  .pending-badge { background: rgba(245,166,35,0.1); color: var(--amber); }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 14 — CONCLUSION
+  ═══════════════════════════════════════════ */
+  .conclusion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  .conc-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px;
+  }
+  .conc-card.featured {
+    background: linear-gradient(135deg, rgba(245,166,35,0.1), rgba(255,107,53,0.06));
+    border-color: rgba(245,166,35,0.25); grid-column: span 2;
+  }
+  .big-quote {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: clamp(18px, 2vw, 26px); line-height: 1.3;
+    color: var(--amber);
+  }
+
+  /* ═══════════════════════════════════════════
+     SLIDE 15 — REFERENCES
+  ═══════════════════════════════════════════ */
+  .ref-list { display: grid; gap: 10px; margin-top: 20px; }
+  .ref-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px;
+    display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start;
+  }
+  .ref-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--amber); padding-top: 1px; }
+  .ref-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .ref-text strong { color: var(--text); font-weight: 500; }
+
+  /* ─── SVG Solar Illustration ─── */
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  .orbit-ring { animation: spin-slow 20s linear infinite; transform-origin: center; }
+  .orbit-ring-2 { animation: spin-slow 14s linear infinite reverse; transform-origin: center; }
+  .sun-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+  /* Keyboard hint */
+  #kbd-hint {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; color: var(--dimmer);
+    font-family: 'DM Mono', monospace; letter-spacing: 0.06em;
+    transition: opacity 0.5s;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="width:6.67%"></div>
+<div id="slide-counter">01 / 15</div>
+
+<button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
+<button class="nav-btn" id="btn-next" onclick="changeSlide(1)">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+</button>
+
+<div id="kbd-hint">← → arrow keys to navigate</div>
+
+<div id="stage">
+
+  <!-- ══════════════ SLIDE 1: COVER ══════════════ -->
+  <div class="slide active" id="s1">
+    <div class="mesh-bg"></div>
+
+    <!-- Animated Solar SVG -->
+    <svg class="cover-sun" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="sunGrad" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#F5A623" stop-opacity="0.9"/>
+          <stop offset="60%" stop-color="#FF6B35" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#FF6B35" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="sunCore" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#FFD580"/>
+          <stop offset="100%" stop-color="#F5A623"/>
+        </radialGradient>
+      </defs>
+      <!-- Glow -->
+      <circle class="sun-glow" cx="170" cy="170" r="120" fill="url(#sunGrad)"/>
+      <!-- Outer orbit -->
+      <g class="orbit-ring">
+        <circle cx="170" cy="170" r="140" fill="none" stroke="rgba(245,166,35,0.12)" stroke-width="1" stroke-dasharray="4 8"/>
+        <circle cx="170" cy="30" r="5" fill="rgba(245,166,35,0.4)"/>
+        <circle cx="310" cy="170" r="3" fill="rgba(255,107,53,0.4)"/>
+      </g>
+      <!-- Inner orbit -->
+      <g class="orbit-ring-2">
+        <circle cx="170" cy="170" r="100" fill="none" stroke="rgba(255,107,53,0.1)" stroke-width="1" stroke-dasharray="2 6"/>
+        <circle cx="170" cy="70" r="4" fill="rgba(245,166,35,0.5)"/>
+        <circle cx="70" cy="170" r="3" fill="rgba(255,107,53,0.3)"/>
+      </g>
+      <!-- Solar Core -->
+      <circle cx="170" cy="170" r="54" fill="url(#sunCore)" opacity="0.95"/>
+      <circle cx="170" cy="170" r="44" fill="#FFE88A" opacity="0.4"/>
+      <!-- Rays -->
+      <g stroke="#F5A623" stroke-width="1.5" stroke-linecap="round" opacity="0.5">
+        <line x1="170" y1="100" x2="170" y2="82"/>
+        <line x1="170" y1="240" x2="170" y2="258"/>
+        <line x1="100" y1="170" x2="82" y2="170"/>
+        <line x1="240" y1="170" x2="258" y2="170"/>
+        <line x1="120" y1="120" x2="107" y2="107"/>
+        <line x1="220" y1="220" x2="233" y2="233"/>
+        <line x1="220" y1="120" x2="233" y2="107"/>
+        <line x1="120" y1="220" x2="107" y2="233"/>
+      </g>
+      <!-- Panel illustration at bottom -->
+      <rect x="100" y="270" width="140" height="40" rx="4" fill="rgba(20,20,20,0.9)" stroke="rgba(245,166,35,0.3)" stroke-width="1"/>
+      <line x1="170" y1="270" x2="170" y2="310" stroke="rgba(245,166,35,0.2)" stroke-width="1"/>
+      <line x1="100" y1="290" x2="240" y2="290" stroke="rgba(245,166,35,0.2)" stroke-width="1"/>
+      <text x="170" y="296" text-anchor="middle" font-family="DM Mono" font-size="8" fill="rgba(245,166,35,0.5)">12.97°N</text>
+    </svg>
+
+    <div style="position:relative; z-index:1; max-width: 600px;">
+      <div class="section-tag" style="margin-bottom: 20px;">RV College of Engineering &nbsp;·&nbsp; EL Phase-I</div>
+      <h1 style="font-size: clamp(28px, 3.8vw, 52px);">Empirical Analysis of<br><span class="accent">Tilt-Angle Optimization</span><br>for Solar Energy Harvesting</h1>
+      <p class="lead" style="margin-top: 20px;">in Tropical Urban Environments at 12.97°N — a real-time, hardware-driven field study.</p>
+
+      <div class="cover-meta">
+        <div class="meta-chip">Domain: <span>Energy & Sustainability</span></div>
+        <div class="meta-chip">Location: <span>Bengaluru, Karnataka</span></div>
+        <div class="meta-chip">Type: <span>Empirical Field Study</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 2: TEAM ══════════════ -->
+  <div class="slide" id="s2">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">The Team</div>
+    <h2>Project Members &amp; Guide</h2>
+    <div class="spacer" style="max-height: 20px;"></div>
+
+    <div class="team-grid" style="flex:1; align-content: start;">
+      <div class="guide-card">
+        <div class="guide-label">Faculty Guide</div>
+        <div class="guide-name">Dr. [Guide Name]</div>
+        <div style="font-size:13px; color:var(--muted); margin-top:4px;">Department of [Department], RV College of Engineering</div>
+      </div>
+      <div class="member-card">
+        <div class="member-avatar">M1</div>
+        <div class="member-name">[Student Name 1]</div>
+        <div class="member-role">USN: [USN]</div>
+      </div>
+      <div class="member-card">
+        <div class="member-avatar">M2</div>
+        <div class="member-name">[Student Name 2]</div>
+        <div class="member-role">USN: [USN]</div>
+      </div>
+      <div class="member-card">
+        <div class="member-avatar">M3</div>
+        <div class="member-name">[Student Name 3]</div>
+        <div class="member-role">USN: [USN]</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 14px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; display: flex; gap: 24px;">
+      <div><div style="font-size:11px; color:var(--muted);">Team Number</div><div style="font-weight:600; font-size:14px;">[XX]</div></div>
+      <div style="width:1px; background:var(--border);"></div>
+      <div><div style="font-size:11px; color:var(--muted);">Semester</div><div style="font-weight:600; font-size:14px;">1st Semester — ODD 2025</div></div>
+      <div style="width:1px; background:var(--border);"></div>
+      <div><div style="font-size:11px; color:var(--muted);">Presentation</div><div style="font-weight:600; font-size:14px;">EL Phase-I</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 3: OUTLINE ══════════════ -->
+  <div class="slide" id="s3">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Navigation</div>
+    <h2>Presentation Outline</h2>
+    <div class="outline-list" style="flex:1;">
+      <div class="outline-item"><span class="outline-num">01</span><span class="outline-label">Introduction</span></div>
+      <div class="outline-item"><span class="outline-num">02</span><span class="outline-label">Literature Review</span></div>
+      <div class="outline-item"><span class="outline-num">03</span><span class="outline-label">Research Gaps</span></div>
+      <div class="outline-item"><span class="outline-num">04</span><span class="outline-label">Problem Definition</span></div>
+      <div class="outline-item"><span class="outline-num">05</span><span class="outline-label">Objectives</span></div>
+      <div class="outline-item"><span class="outline-num">06</span><span class="outline-label">Sensor Architecture</span></div>
+      <div class="outline-item"><span class="outline-num">07</span><span class="outline-label">Methodology</span></div>
+      <div class="outline-item"><span class="outline-num">08</span><span class="outline-label">Proposed Outcomes</span></div>
+      <div class="outline-item"><span class="outline-num">09</span><span class="outline-label">Project Timeline</span></div>
+      <div class="outline-item"><span class="outline-num">10</span><span class="outline-label">Conclusion &amp; References</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 4: INTRODUCTION ══════════════ -->
+  <div class="slide" id="s4">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Introduction</div>
+    <div class="two-col" style="flex:1;">
+      <div>
+        <h2>The Problem with<br><span class="accent">Generalized Models</span></h2>
+        <div class="divider"></div>
+        <p class="lead">Solar panel installations worldwide use tilt-angle recommendations calculated purely from geographic latitude — ignoring hyperlocal atmospheric conditions and urban microclimates.</p>
+        <div class="stat-row" style="margin-top: 24px;">
+          <div class="stat-box">
+            <div class="stat-num">12.97°</div>
+            <div class="stat-label">Bengaluru's latitude — a unique tropical microclimate</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">~0.45%</div>
+            <div class="stat-label">PV efficiency drop per 1°C above 25°C</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SVG: Globe / Coordinate diagram -->
+      <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" style="max-width:300px; margin: auto;">
+        <defs>
+          <radialGradient id="globeGrad" cx="40%" cy="35%">
+            <stop offset="0%" stop-color="#1a1a1a"/>
+            <stop offset="100%" stop-color="#0a0a0a"/>
+          </radialGradient>
+        </defs>
+        <!-- Globe -->
+        <circle cx="160" cy="160" r="110" fill="url(#globeGrad)" stroke="rgba(245,166,35,0.15)" stroke-width="1"/>
+        <!-- Lat lines -->
+        <ellipse cx="160" cy="160" rx="110" ry="22" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <ellipse cx="160" cy="160" rx="110" ry="55" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <ellipse cx="160" cy="160" rx="110" ry="88" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <!-- Equator -->
+        <ellipse cx="160" cy="160" rx="110" ry="0" fill="none" stroke="rgba(245,166,35,0.2)" stroke-width="1"/>
+        <line x1="50" y1="160" x2="270" y2="160" stroke="rgba(245,166,35,0.15)" stroke-width="1" stroke-dasharray="3 5"/>
+        <!-- Long lines -->
+        <line x1="160" y1="50" x2="160" y2="270" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <path d="M 160 50 Q 220 160 160 270" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <path d="M 160 50 Q 100 160 160 270" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <!-- India roughly -->
+        <circle cx="192" cy="142" r="16" fill="rgba(245,166,35,0.08)" stroke="rgba(245,166,35,0.25)" stroke-width="1"/>
+        <!-- Bengaluru dot -->
+        <circle cx="192" cy="148" r="5" fill="var(--amber)"/>
+        <circle cx="192" cy="148" r="10" fill="none" stroke="var(--amber)" stroke-width="1" opacity="0.4"/>
+        <!-- Label -->
+        <line x1="197" y1="148" x2="235" y2="118" stroke="var(--amber)" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+        <text x="238" y="115" font-family="DM Mono" font-size="9" fill="var(--amber)">12.97°N</text>
+        <text x="238" y="126" font-family="DM Mono" font-size="8" fill="rgba(245,166,35,0.5)">Bengaluru</text>
+        <!-- Tilt angle arc -->
+        <path d="M 192 220 L 192 148" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3 4"/>
+        <path d="M 192 220 L 225 175" stroke="var(--orange)" stroke-width="1.5"/>
+        <path d="M 192 200 Q 200 195 205 185" fill="none" stroke="var(--orange)" stroke-width="1" opacity="0.6"/>
+        <text x="210" y="198" font-family="DM Mono" font-size="8" fill="var(--orange)">θ tilt</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 5: WHY IT MATTERS ══════════════ -->
+  <div class="slide" id="s5">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Introduction</div>
+    <h2>Why Tilt Optimization <span class="accent">Actually Matters</span></h2>
+
+    <div class="impact-grid" style="flex:1;">
+      <div class="impact-card">
+        <div class="impact-icon">🌇</div>
+        <div class="impact-title">Urban Heat Island Effect</div>
+        <div class="impact-text">Dense urban environments raise local temperatures, compounding thermal losses in solar panels beyond standard STC predictions.</div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-icon">📐</div>
+        <div class="impact-title">Rule-of-Thumb Installations</div>
+        <div class="impact-text">Most Indian rooftop installations are set at fixed tilt angles decided by installers using approximations — not field-validated data.</div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-icon">☀️</div>
+        <div class="impact-title">Seasonal Declination Shift</div>
+        <div class="impact-text">The optimal tilt angle migrates with the sun's arc between solstices. A single fixed angle sacrifices significant yield across seasons.</div>
+      </div>
+      <div class="impact-card" style="grid-column: span 2;">
+        <div class="impact-icon">⚡</div>
+        <div class="impact-title">Scale Impact</div>
+        <div class="impact-text">Even a <strong style="color:var(--amber)">5–10° correction</strong> in panel tilt, calibrated to local conditions, can meaningfully improve annual energy yield. Across <strong style="color:var(--amber)">thousands of Bengaluru rooftop installations</strong> — that difference is enormous.</div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-icon">🔬</div>
+        <div class="impact-title">Zero Local Field Data</div>
+        <div class="impact-text">No empirical, hardware-driven dataset exists for Bengaluru's specific coordinates and microclimate. We're generating it.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 6: LITERATURE REVIEW ══════════════ -->
+  <div class="slide" id="s6">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Literature Review</div>
+    <h2>What Existing <span class="accent">Research Has Done</span></h2>
+
+    <div class="paper-grid" style="flex:1; margin-top: 20px;">
+      <div class="paper-card">
+        <div class="paper-num">[01]</div>
+        <div>
+          <div class="paper-title">Tilt angle optimization by Taylor's series expansion for maximum solar radiation in humid subtropical regions</div>
+          <div class="paper-sub">Uses Liu-Jordan / HDKR regression models to estimate solar radiation on tilted surfaces for cities including Bangalore — <em>mathematical models, not real measurements.</em></div>
+          <div class="paper-tag">ResearchGate · Feb 2022</div>
+        </div>
+      </div>
+      <div class="paper-card">
+        <div class="paper-num">[02]</div>
+        <div>
+          <div class="paper-title">Optimum tilt-angles for solar panels in Indian climates: A new approach</div>
+          <div class="paper-sub">Focused on North/West Indian cities — Kota, Barmer, Jodhpur — using MATLAB algorithms. Entirely computational; no hardware validation for southern latitudes.</div>
+          <div class="paper-tag">ScienceDirect · Nov 2024</div>
+        </div>
+      </div>
+      <div class="paper-card">
+        <div class="paper-num">[03]</div>
+        <div>
+          <div class="paper-title">MacCormack finite difference technique for optimal tilt across 23 Indian locations</div>
+          <div class="paper-sub">Covers 23 locations with a finite difference technique — purely computational, no field sensor data, no thermal correction integration.</div>
+          <div class="paper-tag">ScienceDirect</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; padding: 12px 18px; background: rgba(245,166,35,0.06); border: 1px solid rgba(245,166,35,0.15); border-radius: 10px;">
+      <span style="font-size:12px; color:var(--muted);">Review finding (Wiley): </span>
+      <span style="font-size:12px; color:var(--text);">"Most studies have been performed using software via simulating solar radiation models. <strong>Very few studies have used a hardware setup</strong> to find the optimal angle. Limited studies have been done in India with real-time data."</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 7: GAPS ══════════════ -->
+  <div class="slide" id="s7">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Literature Review</div>
+    <h2>Four Critical <span class="accent">Research Gaps</span></h2>
+
+    <div class="gap-grid" style="flex:1;">
+      <div class="gap-card">
+        <div class="gap-num">GAP 01</div>
+        <div class="gap-title">Almost No Real Hardware in India</div>
+        <div class="gap-text">Published reviews confirm that nearly all Indian tilt-optimization studies are purely computational. Real-time sensor-based field experiments are virtually absent in the literature.</div>
+      </div>
+      <div class="gap-card">
+        <div class="gap-num">GAP 02</div>
+        <div class="gap-title">Bengaluru Has No Field-Validated Data</div>
+        <div class="gap-text">Mathematical models estimate 11.4°–26.7° as optimal for tropical cities — but none are validated at Bengaluru's actual microclimate coordinates. Nobody has measured it.</div>
+      </div>
+      <div class="gap-card">
+        <div class="gap-num">GAP 03</div>
+        <div class="gap-title">Urban Heat Island + Thermal Correction Uncombined</div>
+        <div class="gap-text">Research acknowledges UHI degrades panel efficiency, but no study simultaneously combines real-time temperature correction with tilt optimization as a concurrent measurement.</div>
+      </div>
+      <div class="gap-card">
+        <div class="gap-num">GAP 04</div>
+        <div class="gap-title">Intraday Tilt Behavior Ignored</div>
+        <div class="gap-text">All existing papers give monthly or seasonal optimal angles. Nobody has measured what the best angle is at 8am vs 12pm vs 4pm on the same day — we will.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; padding: 12px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 13px;">
+      💡 <span style="color:var(--amber); font-weight:500;">Our approach:</span> <span style="color:var(--muted);">We address all four gaps simultaneously — real hardware, Bengaluru-specific, thermal + tilt combined, intraday resolution. Validated against existing theoretical models for double novelty.</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 8: PROBLEM DEFINITION ══════════════ -->
+  <div class="slide" id="s8">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Problem Definition</div>
+    <h2>The Gap We're <span class="accent">Filling</span></h2>
+
+    <div class="problem-split">
+      <div class="highlight-box">
+        <div class="hl-title">What is missing</div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">No primary field data on optimal solar tilt for Bengaluru (12.97°N) — only computational estimates exist</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">No study corrects for thermal derating <em>while</em> measuring tilt efficiency — the two effects are always treated separately</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Fixed installer approximations are used across thousands of rooftop systems without location-specific validation</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Intraday variation in optimal tilt angle has never been measured — only monthly averages are published</div></div>
+      </div>
+
+      <!-- What we do -->
+      <div class="col" style="gap: 12px;">
+        <div style="font-family:'DM Mono', monospace; font-size:10px; color:var(--dimmer); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:4px;">Our Solution</div>
+        <div class="card card-sm" style="border-color: rgba(245,166,35,0.15);">
+          <div style="font-size:12px; color:var(--amber); margin-bottom:4px; font-family:'DM Mono',monospace;">HARDWARE</div>
+          <div style="font-size:13px; line-height:1.5;">4-sensor real-time data acquisition system built from scratch</div>
+        </div>
+        <div class="card card-sm" style="border-color: rgba(245,166,35,0.15);">
+          <div style="font-size:12px; color:var(--amber); margin-bottom:4px; font-family:'DM Mono',monospace;">LOCATION</div>
+          <div style="font-size:13px; line-height:1.5;">Deployed at Bengaluru's exact coordinates — 12.97°N</div>
+        </div>
+        <div class="card card-sm" style="border-color: rgba(245,166,35,0.15);">
+          <div style="font-size:12px; color:var(--amber); margin-bottom:4px; font-family:'DM Mono',monospace;">MULTI-VARIABLE</div>
+          <div style="font-size:13px; line-height:1.5;">Simultaneous tilt, light, power, and temperature logging</div>
+        </div>
+        <div class="card card-sm" style="border-color: rgba(245,166,35,0.15);">
+          <div style="font-size:12px; color:var(--amber); margin-bottom:4px; font-family:'DM Mono',monospace;">VALIDATION</div>
+          <div style="font-size:13px; line-height:1.5;">Empirical results cross-validated against theoretical models</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 9: OBJECTIVES ══════════════ -->
+  <div class="slide" id="s9">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Objectives</div>
+    <h2>What We're <span class="accent">Measuring</span></h2>
+
+    <div class="obj-list" style="flex:1; margin-top: 20px;">
+      <div class="obj-item">
+        <div class="obj-icon">📡</div>
+        <div class="obj-content">
+          <h3>Build & Deploy a Multi-Sensor Data Acquisition System</h3>
+          <p>Construct a hardware system with solar cell, LDR/BH1750, MPU-6050 gyroscope, and DS18B20 temperature sensors — all simultaneously logging timestamped data.</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">📐</div>
+        <div class="obj-content">
+          <h3>Test Three Controlled Tilt Angles Across a Full Solar Day</h3>
+          <p>Compare power output at low, moderate, and steep inclinations from dawn to dusk in defined intervals — building complete intraday power curves.</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">🌡️</div>
+        <div class="obj-content">
+          <h3>Apply Temperature-Correction Algorithm to Isolate Geometric Efficiency</h3>
+          <p>Remove thermal derating bias (~0.45%/°C) from raw power readings to measure pure panel efficiency independent of ambient temperature effects.</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">📊</div>
+        <div class="obj-content">
+          <h3>Validate Empirical Findings Against Theoretical Models</h3>
+          <p>Cross-reference collected field data with Liu-Jordan and HDKR computational predictions to establish how well existing models hold for Bengaluru's microclimate.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 10: SENSOR ARCHITECTURE ══════════════ -->
+  <div class="slide" id="s10">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Methodology</div>
+    <h2>Sensor <span class="accent">Architecture</span></h2>
+
+    <table class="sensor-table" style="flex:1;">
+      <thead>
+        <tr>
+          <th>Sensor</th>
+          <th>Parameter Measured</th>
+          <th>Role in Study</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="sensor-name">Solar Cell Sensor</div>
+            <div class="sensor-model">PV Transducer</div>
+          </td>
+          <td>Voltage × Current = Power Output (W)</td>
+          <td>Primary dependent variable — measures actual energy yield at each tilt configuration</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="sensor-name">Ambient Light Sensor</div>
+            <div class="sensor-model">LDR / BH1750</div>
+          </td>
+          <td>Irradiance in Lux — independent of panel</td>
+          <td>Normalizes for cloud cover and scattering; isolates panel efficiency from raw sunlight availability</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="sensor-name">Tilt / Gyroscope Sensor</div>
+            <div class="sensor-model">MPU-6050</div>
+          </td>
+          <td>Angular position in degrees (6-axis)</td>
+          <td>Provides verified tilt configuration for every data point — eliminates angular estimation error</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="sensor-name">Temperature Sensor</div>
+            <div class="sensor-model">DS18B20</div>
+          </td>
+          <td>Panel surface + ambient temperature (°C)</td>
+          <td>Enables thermal derating correction: removes ~0.45%/°C efficiency loss bias from power readings</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 14px; display: flex; gap: 12px; align-items: center; padding: 12px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 10px;">
+      <div style="font-size:13px; color:var(--muted);">All four sensors feed simultaneously into a microcontroller which <strong style="color:var(--text);">timestamps every data point</strong> — producing a multi-dimensional dataset impossible with any single sensor alone.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 11: METHODOLOGY ══════════════ -->
+  <div class="slide" id="s11">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Methodology</div>
+    <h2>Study <span class="accent">Design</span></h2>
+
+    <!-- Flowchart -->
+    <div class="flow-container">
+      <div class="flow-node">
+        <div class="flow-icon">🌅</div>
+        <div class="flow-label">Panel Setup</div>
+        <div class="flow-sub">3 fixed tilt angles — low, moderate, steep</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node highlight">
+        <div class="flow-icon">📡</div>
+        <div class="flow-label">Data Collection</div>
+        <div class="flow-sub">Dawn to dusk, defined intervals, all 4 sensors</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="flow-icon">☁️</div>
+        <div class="flow-label">Normalize for Irradiance</div>
+        <div class="flow-sub">LDR readings cross-referenced with power output</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node highlight">
+        <div class="flow-icon">🌡️</div>
+        <div class="flow-label">Thermal Correction</div>
+        <div class="flow-sub">−0.45%/°C algorithm applied in post-processing</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="flow-icon">📊</div>
+        <div class="flow-label">Analysis &amp; Validation</div>
+        <div class="flow-sub">vs. theoretical models (Liu-Jordan, HDKR)</div>
+      </div>
+    </div>
+
+    <!-- Variables -->
+    <div class="method-vars" style="margin-top: 18px;">
+      <div class="var-card"><div class="var-badge indep">Independent</div><div class="var-text">Tilt angle (3 configurations)</div></div>
+      <div class="var-card"><div class="var-badge dep">Dependent</div><div class="var-text">Temperature-corrected power output (W)</div></div>
+      <div class="var-card"><div class="var-badge indep">Independent</div><div class="var-text">Time of day (dawn → dusk)</div></div>
+      <div class="var-card"><div class="var-badge indep">Independent</div><div class="var-text">Season (repeated across solar year)</div></div>
+    </div>
+
+    <div style="margin-top: 12px; font-size:12px; color:var(--dimmer);">
+      Structure: 3 independent variables measured against 1 dependent variable — a controlled scientific experiment.
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 12: OUTCOMES ══════════════ -->
+  <div class="slide" id="s12">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Proposed Outcomes</div>
+    <h2>What This Study <span class="accent">Generates</span></h2>
+
+    <div class="outcome-grid" style="flex:1;">
+      <div class="outcome-card">
+        <div class="outcome-icon">📈</div>
+        <div class="outcome-title">Power Output Curves</div>
+        <div class="outcome-text">Time-of-day vs output plotted for each tilt angle — showing exactly when each configuration peaks and drops across a full solar day.</div>
+      </div>
+      <div class="outcome-card">
+        <div class="outcome-icon">🔢</div>
+        <div class="outcome-title">Tilt Efficiency Matrix</div>
+        <div class="outcome-text">A comparative matrix revealing which angle delivers superior cumulative energy yield over a full day — the first such field-validated table for Bengaluru.</div>
+      </div>
+      <div class="outcome-card">
+        <div class="outcome-icon">📅</div>
+        <div class="outcome-title">Seasonal Shift Analysis</div>
+        <div class="outcome-text">Demonstrates how the optimal angle migrates as the sun's elevation arc shifts between solstices — tied to Bengaluru's astronomical position.</div>
+      </div>
+      <div class="outcome-card">
+        <div class="outcome-icon">🌡️</div>
+        <div class="outcome-title">Thermally-Corrected Dataset</div>
+        <div class="outcome-text">Strips out thermal noise to isolate pure geometric efficiency — enabling clean comparison with theoretical models.</div>
+      </div>
+      <div class="outcome-card">
+        <div class="outcome-icon">📍</div>
+        <div class="outcome-title">Location-Specific Solar Guideline</div>
+        <div class="outcome-text">A positioning guideline for 12.97°N derived from primary field data — something that currently does not exist for Bengaluru.</div>
+      </div>
+      <div class="outcome-card" style="background: linear-gradient(135deg, rgba(245,166,35,0.1), rgba(255,107,53,0.06)); border-color: rgba(245,166,35,0.2);">
+        <div class="outcome-icon">🔬</div>
+        <div class="outcome-title">Original Research Contribution</div>
+        <div class="outcome-text">The dataset itself is the research contribution — original, primary, scientific data generated from the ground up for a gap nobody has filled.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 13: TIMELINE ══════════════ -->
+  <div class="slide" id="s13">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Timeline</div>
+    <h2>Project <span class="accent">Phases</span></h2>
+
+    <div class="timeline" style="flex:1;">
+      <div class="tl-track"><div class="tl-fill"></div></div>
+
+      <div class="tl-phases">
+        <div class="tl-phase done">
+          <div class="tl-week">PHASE 1</div>
+          <div class="tl-task">Literature Review &amp; Gap Analysis</div>
+          <div class="tl-detail">Survey of existing tilt-optimization studies; identification of four primary research gaps.</div>
+          <div><span class="tl-status done-badge">Complete</span></div>
+        </div>
+        <div class="tl-phase done">
+          <div class="tl-week">PHASE 2</div>
+          <div class="tl-task">Sensor Selection &amp; System Design</div>
+          <div class="tl-detail">Selection of MPU-6050, DS18B20, BH1750, PV cell; circuit design and microcontroller integration.</div>
+          <div><span class="tl-status done-badge">Complete</span></div>
+        </div>
+        <div class="tl-phase">
+          <div class="tl-week">PHASE 3</div>
+          <div class="tl-task">Hardware Build &amp; Calibration</div>
+          <div class="tl-detail">Physical assembly and sensor calibration; test data collection and logging verification.</div>
+          <div><span class="tl-status pending-badge">In Progress</span></div>
+        </div>
+        <div class="tl-phase">
+          <div class="tl-week">PHASE 4</div>
+          <div class="tl-task">Field Data Collection</div>
+          <div class="tl-detail">Full solar day measurements at 3 tilt configurations; repeated across two seasonal windows.</div>
+          <div><span class="tl-status pending-badge">Upcoming</span></div>
+        </div>
+        <div class="tl-phase">
+          <div class="tl-week">PHASE 5</div>
+          <div class="tl-task">Analysis &amp; Validation</div>
+          <div class="tl-detail">Post-processing, thermal correction, model comparison, and final guideline derivation.</div>
+          <div><span class="tl-status pending-badge">Upcoming</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 14: CONCLUSION ══════════════ -->
+  <div class="slide" id="s14">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">Conclusion</div>
+    <h2>The <span class="accent">Research Contribution</span></h2>
+
+    <div class="conclusion-grid" style="flex:1; margin-top: 20px;">
+      <div class="conc-card featured">
+        <div class="big-quote">"We are not running a simulation. We are not using someone else's dataset. We are generating original, primary scientific data from the ground up — and that dataset is the research contribution."</div>
+      </div>
+      <div class="conc-card">
+        <h3 style="margin-bottom: 10px;">Why This Is Novel</h3>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Real hardware in India — almost none exists in literature</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Bengaluru-specific field data for the first time</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Intraday tilt resolution — finer than any published paper</div></div>
+      </div>
+      <div class="conc-card">
+        <h3 style="margin-bottom: 10px;">The Dual Approach</h3>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Empirical field data from 4 simultaneous sensors</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Validated against Liu-Jordan &amp; HDKR theoretical models</div></div>
+        <div class="hl-point"><div class="hl-dot"></div><div class="hl-text">Something no existing paper has done for Bengaluru</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 15: REFERENCES ══════════════ -->
+  <div class="slide" id="s15">
+    <div class="mesh-bg"></div>
+    <div class="section-tag">References</div>
+    <h2>Sources &amp; <span class="accent">Literature</span></h2>
+
+    <div class="ref-list" style="flex:1; margin-top: 16px;">
+      <div class="ref-item">
+        <div class="ref-num">[1]</div>
+        <div class="ref-text"><strong>Tilt angle optimization by Taylor's series expansion for maximum solar radiation in humid subtropical regions of India.</strong> ResearchGate, February 2022.</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[2]</div>
+        <div class="ref-text"><strong>Determination of the optimum tilt-angles for solar panels in Indian climates: A new approach.</strong> ScienceDirect, November 2024.</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[3]</div>
+        <div class="ref-text"><strong>MacCormack finite difference technique for optimal solar tilt prediction across 23 Indian locations.</strong> ScienceDirect.</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[4]</div>
+        <div class="ref-text"><strong>Review of hardware-based solar tilt optimization studies — confirming limited real-time field studies in India.</strong> Wiley Online Library.</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[5]</div>
+        <div class="ref-text"><strong>Estimated optimal tilt angle range 11.4°–26.7° for tropical cities</strong> — mathematical prediction, not field-validated for Bengaluru's microclimate. Academia.edu.</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[6]</div>
+        <div class="ref-text"><strong>Urban heat island interaction with solar panel efficiency in dense urban environments.</strong> Wiley Online Library.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; text-align: center; padding: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;">
+      <div style="font-family:'Syne', sans-serif; font-weight:700; font-size:16px; color:var(--amber);">Thank You</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">RV College of Engineering · EL Phase-I · Odd Semester 2025</div>
+    </div>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+  const TOTAL = 15;
+  let current = 1;
+  let isAnimating = false;
+
+  function updateUI() {
+    document.getElementById('progress-bar').style.width = ((current / TOTAL) * 100) + '%';
+    document.getElementById('slide-counter').textContent =
+      String(current).padStart(2,'0') + ' / ' + String(TOTAL).padStart(2,'0');
+    document.getElementById('btn-prev').style.opacity = current === 1 ? '0.3' : '1';
+    document.getElementById('btn-next').style.opacity = current === TOTAL ? '0.3' : '1';
+  }
+
+  function changeSlide(dir) {
+    if (isAnimating) return;
+    const next = current + dir;
+    if (next < 1 || next > TOTAL) return;
+
+    isAnimating = true;
+    const currentSlide = document.getElementById('s' + current);
+    const nextSlide = document.getElementById('s' + next);
+
+    // Exit current
+    currentSlide.classList.add('exit');
+    currentSlide.classList.remove('active');
+
+    // Small delay then enter next
+    setTimeout(() => {
+      currentSlide.classList.remove('exit');
+      nextSlide.style.transform = dir > 0 ? 'translateY(24px)' : 'translateY(-24px)';
+      nextSlide.classList.add('active');
+      requestAnimationFrame(() => {
+        nextSlide.style.transform = '';
+      });
+      current = next;
+      updateUI();
+      setTimeout(() => { isAnimating = false; }, 600);
+    }, 250);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+  });
+
+  // Hide keyboard hint after 4s
+  setTimeout(() => {
+    const hint = document.getElementById('kbd-hint');
+    if (hint) hint.style.opacity = '0';
+  }, 4000);
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) changeSlide(dx < 0 ? 1 : -1);
+  });
+
+  updateUI();
+</script>
+</body>
+</html>
