@@ -98,7 +98,7 @@ async def broadcast_loop():
                     await ws.send(payload)
                 except Exception:
                     dead.add(ws)
-            connected_clients -= dead
+            connected_clients.difference_update(dead)
 
 # ─── WebSocket Handler ───────────────────────────────────────────────────────
 async def ws_handler(websocket, path=None):
