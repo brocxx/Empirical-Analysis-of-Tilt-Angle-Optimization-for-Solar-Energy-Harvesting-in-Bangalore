@@ -415,11 +415,12 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
             return
 
     count = 0
-    
+    serial_packet = {}   # accumulates key:value fields between Arduino separator lines
+
     # Base datetime for mock wall clock simulation if simulating
     sim_base_times = {
-        "morning": datetime.datetime.strptime(f"{date_str} 08:00:00", "%Y%m%d %H:%M:%S"),
-        "midday": datetime.datetime.strptime(f"{date_str} 11:30:00", "%Y%m%d %H:%M:%S"),
+        "morning":   datetime.datetime.strptime(f"{date_str} 08:00:00", "%Y%m%d %H:%M:%S"),
+        "midday":    datetime.datetime.strptime(f"{date_str} 11:30:00", "%Y%m%d %H:%M:%S"),
         "afternoon": datetime.datetime.strptime(f"{date_str} 15:00:00", "%Y%m%d %H:%M:%S")
     }
     sim_current_dt = sim_base_times.get(session, datetime.datetime.now())
@@ -482,43 +483,80 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
                     round(temp_corr_pct, 4), round(tilt_meas, 2), round(cumulative_wh_sum, 6)
                 ]
             else:
-                # ─── Physical Serial Port Read ─────────────────────────────────
-                # Read line from Arduino
+                # ─── Physical Serial Port Read (key:value packet format) ────────
+                # Arduino sends blocks like:
+                #   Voltage (V): 17.61
+                #   Current (mA): 320.5
+                #   Power (W): 5.64
+                #   Lux: 45200.00
+                #   Temperature (C): 30.87
+                #   Tilt (deg): 13.05
+                #   ------------------------
+                # Accumulate fields; flush one row when separator arrives.
+
                 line = ser.readline()
                 if not line:
-                    continue # Timeout, try again
-                
+                    continue  # timeout, try again
+
                 try:
                     decoded = line.decode("utf-8", errors="replace").strip()
                 except Exception as e:
                     print(f"\n[Serial] Decode error: {e}")
                     continue
-                
+
                 if not decoded:
                     continue
-                
-                # Check for comment rows or start messages
-                if "," not in decoded or decoded.startswith("Initializing") or decoded.startswith("---"):
-                    print(f"\n[Arduino Msg] {decoded}")
+
+                # Separator line → flush the accumulated packet as one CSV row
+                if decoded.startswith("---") or decoded.startswith("==="):
+                    pkt = serial_packet  # alias for readability
+                    if not pkt:
+                        continue  # empty packet before first separator
+
+                    # Extract values with fallbacks
+                    voltage  = pkt.get("voltage",  0.0)
+                    current  = pkt.get("current",  0.0)
+                    lux      = pkt.get("lux",      0.0)
+                    temp     = pkt.get("temp",     25.0)
+                    tilt_mea = pkt.get("tilt",     float(angle))
+                    # Power: use reported value if present, else calculate
+                    power_w  = pkt.get("power_w",  (voltage * current) / 1000.0)
+
+                    # Derived columns
+                    temp_corr_pct   = (temp - 25.0) * -0.004
+                    power_corr_w    = power_w * (1.0 + temp_corr_pct)
+                    ts_ms           = count * 30000
+                    cumulative_wh_sum += power_w * (30.0 / 3600.0)
+
+                    row_data = [
+                        ts_ms, int(angle), round(lux, 2), round(temp, 2),
+                        round(voltage, 3), round(current, 2),
+                        round(power_w, 4), round(power_corr_w, 4),
+                        round(temp_corr_pct, 4), round(tilt_mea, 2),
+                        round(cumulative_wh_sum, 6)
+                    ]
+                    sys_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    serial_packet = {}  # reset for next packet
+
+                else:
+                    # Parse "Key (unit): value" lines into the running dict
+                    m = decoded.split(":", 1)
+                    if len(m) == 2:
+                        key_raw = m[0].strip().lower()
+                        try:
+                            val = float(m[1].strip())
+                        except ValueError:
+                            continue
+                        if "voltage"     in key_raw: serial_packet["voltage"]  = val
+                        elif "current"   in key_raw: serial_packet["current"]  = val
+                        elif "power"     in key_raw: serial_packet["power_w"]  = val   # may be W or mW — see below
+                        elif "lux"       in key_raw: serial_packet["lux"]      = val
+                        elif "temp"      in key_raw: serial_packet["temp"]     = val
+                        elif "tilt"      in key_raw: serial_packet["tilt"]     = val
+                    continue  # not a separator → keep reading lines
+
+                if row_data is None:
                     continue
-                
-                # Parse columns
-                parts = [p.strip() for p in decoded.split(",")]
-                if len(parts) != len(COLUMNS):
-                    print(f"\n[Warning] Row had {len(parts)} columns (expected {len(COLUMNS)}). Ignored: {decoded}")
-                    continue
-                
-                # Validate numbers
-                try:
-                    row_data = [float(val) if "." in val or val.isdigit() else int(val) for val in parts]
-                    # Format standard types
-                    row_data[0] = int(row_data[0]) # timestamp_ms
-                    row_data[1] = int(row_data[1]) # tilt_setting_deg
-                except ValueError:
-                    print(f"\n[Warning] Non-numeric data columns in row. Ignored: {decoded}")
-                    continue
-                
-                sys_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # ─── Write Row to CSV ─────────────────────────────────────────────
             writer.writerow(row_data + [sys_time_str])
