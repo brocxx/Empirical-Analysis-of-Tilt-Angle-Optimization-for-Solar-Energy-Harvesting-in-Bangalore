@@ -20,6 +20,9 @@ import time
 import argparse
 import datetime
 import csv
+import queue
+import threading
+import asyncio
 
 # Third-party libraries
 try:
@@ -36,6 +39,67 @@ try:
 except ImportError:
     print("[Error] 'pandas', 'matplotlib', or 'numpy' is missing. Please run: pip install pandas matplotlib numpy")
     sys.exit(1)
+
+try:
+    import websockets
+    HAS_WEBSOCKETS = True
+except ImportError:
+    HAS_WEBSOCKETS = False
+
+
+# ─── WebSocket Server & Broadcasting ──────────────────────────────────────────
+ws_clients = set()
+ws_loop = None
+
+def start_ws_server(host='localhost', port=8765):
+    """Starts the WebSocket server in a background thread."""
+    global ws_loop
+    if not HAS_WEBSOCKETS:
+        print("[WS Server] Notice: 'websockets' library not found. Dashboard integration disabled.")
+        return
+    
+    ws_loop = asyncio.new_event_loop()
+    
+    async def handler(websocket, path=None):
+        ws_clients.add(websocket)
+        try:
+            await websocket.wait_closed()
+        finally:
+            ws_clients.discard(websocket)
+            
+    async def main_ws():
+        async with websockets.serve(handler, host, port):
+            await asyncio.Future()  # run forever
+            
+    def run_loop():
+        asyncio.set_event_loop(ws_loop)
+        try:
+            ws_loop.run_until_complete(main_ws())
+        except Exception:
+            pass
+
+    t = threading.Thread(target=run_loop, daemon=True)
+    t.start()
+    print(f"[WS Server] Broadcast server running on ws://{host}:{port}")
+
+def broadcast_to_ws(message):
+    """Broadcasts a message to all connected WebSocket clients in a thread-safe way."""
+    if not ws_clients or ws_loop is None:
+        return
+    
+    async def send_all():
+        if ws_clients:
+            clients_copy = list(ws_clients)
+            dead = set()
+            for client in clients_copy:
+                try:
+                    await client.send(message)
+                except Exception:
+                    dead.add(client)
+            if dead:
+                ws_clients.difference_update(dead)
+                
+    asyncio.run_coroutine_threadsafe(send_all(), ws_loop)
 
 
 # ─── Configurable Constants ───────────────────────────────────────────────────
@@ -460,6 +524,28 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
             writer.writerow(row_data + [sys_time_str])
             f.flush()
             
+            # Broadcast to WebSocket for live Dashboard integration
+            try:
+                v_val = row_data[4]
+                i_val = row_data[5]
+                p_val = row_data[6]
+                lux_val = row_data[2]
+                temp_val = row_data[3]
+                tilt_val = row_data[9]
+                
+                ws_msg = (
+                    f"Voltage (V): {v_val:.3f}\n"
+                    f"Current (mA): {i_val:.2f}\n"
+                    f"Power (mW): {p_val * 1000.0:.2f}\n"
+                    f"Lux: {lux_val:.2f}\n"
+                    f"Temperature (C): {temp_val:.2f}\n"
+                    f"Tilt (deg): {tilt_val:.2f}\n"
+                    "------------------------\n"
+                )
+                broadcast_to_ws(ws_msg)
+            except Exception:
+                pass
+            
             count += 1
             
             # Print live console update
@@ -506,6 +592,9 @@ def main():
     port = args.port
     simulate = args.simulate
     real_time = args.real_time
+
+    # Start WebSocket Broadcast Server for Dashboard integration
+    start_ws_server()
 
     print("=" * 60)
     print("   SOLAR PANEL TILT ANGLE STUDY — LOGGING & ANALYSIS")
