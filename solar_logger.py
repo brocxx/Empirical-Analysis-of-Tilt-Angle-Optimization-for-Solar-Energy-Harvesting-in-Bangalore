@@ -511,7 +511,13 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
                 if decoded.startswith("---") or decoded.startswith("==="):
                     pkt = serial_packet  # alias for readability
                     if not pkt:
+                        if count == 0:
+                            print(f"\n[Serial] Waiting for first data packet (at separator #{count})...")
                         continue  # empty packet before first separator
+
+                    # DEBUG: Print what we found
+                    if count < 3:  # Only debug first few rows
+                        print(f"\n[Serial] Separator found. Accumulated fields: {pkt}")
 
                     # Extract values with fallbacks
                     voltage  = pkt.get("voltage",  0.0)
@@ -519,8 +525,10 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
                     lux      = pkt.get("lux",      0.0)
                     temp     = pkt.get("temp",     25.0)
                     tilt_mea = pkt.get("tilt",     float(angle))
-                    # Power: use reported value if present, else calculate
-                    power_w  = pkt.get("power_w",  (voltage * current) / 1000.0)
+                    # Power: Arduino sends Power (mW), so convert to W
+                    # If power_w is in packet, it's in mW — convert to W
+                    power_mw = pkt.get("power_w",  (voltage * current))  # fallback: calculate from V*I in mW
+                    power_w  = power_mw / 1000.0  # Convert mW to W
 
                     # Derived columns
                     temp_corr_pct   = (temp - 25.0) * -0.004
@@ -546,13 +554,20 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
                         try:
                             val = float(m[1].strip())
                         except ValueError:
+                            if count < 2:
+                                print(f"[Serial] Could not parse value from: {decoded}")
                             continue
                         if "voltage"     in key_raw: serial_packet["voltage"]  = val
                         elif "current"   in key_raw: serial_packet["current"]  = val
-                        elif "power"     in key_raw: serial_packet["power_w"]  = val   # may be W or mW — see below
+                        elif "power"     in key_raw: 
+                            serial_packet["power_w"]  = val   # Store as-is (mW from Arduino)
+                            if count < 2:
+                                print(f"[Serial] Parsed Power: {val} mW")
                         elif "lux"       in key_raw: serial_packet["lux"]      = val
                         elif "temp"      in key_raw: serial_packet["temp"]     = val
                         elif "tilt"      in key_raw: serial_packet["tilt"]     = val
+                    elif count < 2:
+                        print(f"[Serial] Could not parse line: {decoded}")
                     continue  # not a separator → keep reading lines
 
                 if row_data is None:
