@@ -103,7 +103,7 @@ def broadcast_to_ws(message):
 
 
 # ─── Configurable Constants ───────────────────────────────────────────────────
-SERIAL_PORT = "COM3"          # Default serial port (can override via CLI)
+SERIAL_PORT = "COM5"          # Default serial port (can override via CLI)
 BAUD_RATE = 115200            # Serial baud rate
 SESSION_DURATION_MINS = 60    # Logging session length in minutes
 GRAPHS_DIR = "graphs"         # Output directory for graphs
@@ -524,24 +524,17 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
             writer.writerow(row_data + [sys_time_str])
             f.flush()
             
-            # Broadcast to WebSocket for live Dashboard integration
+            # Broadcast to WebSocket for live Dashboard integration (JSON)
             try:
-                v_val = row_data[4]
-                i_val = row_data[5]
-                p_val = row_data[6]
-                lux_val = row_data[2]
-                temp_val = row_data[3]
-                tilt_val = row_data[9]
-                
-                ws_msg = (
-                    f"Voltage (V): {v_val:.3f}\n"
-                    f"Current (mA): {i_val:.2f}\n"
-                    f"Power (mW): {p_val * 1000.0:.2f}\n"
-                    f"Lux: {lux_val:.2f}\n"
-                    f"Temperature (C): {temp_val:.2f}\n"
-                    f"Tilt (deg): {tilt_val:.2f}\n"
-                    "------------------------\n"
-                )
+                import json as _json
+                ws_msg = _json.dumps({
+                    "voltage": round(float(row_data[4]), 3),
+                    "current": round(float(row_data[5]), 2),
+                    "power":   round(float(row_data[6]) * 1000.0, 2),  # convert W -> mW
+                    "lux":     round(float(row_data[2]), 1),
+                    "temp":    round(float(row_data[3]), 2),
+                    "tilt":    round(float(row_data[9]), 2)
+                })
                 broadcast_to_ws(ws_msg)
             except Exception:
                 pass

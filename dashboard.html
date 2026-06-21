@@ -923,7 +923,7 @@
         </div>
         <div class="conn-field">
           <label>Serial Port (bridge)</label>
-          <input type="text" id="serial-port" value="COM3" placeholder="COM3 or /dev/ttyUSB0">
+          <input type="text" id="serial-port" value="COM5" placeholder="COM5 or /dev/ttyUSB0">
         </div>
         <div class="conn-field">
           <label>Baud Rate</label>
@@ -939,12 +939,12 @@
         </div>
       </div>
       <div class="conn-info">
-        ⚡ <strong style="color:var(--text)">How to get serial data into this dashboard:</strong>
-        Run the Python bridge: <code
-          style="color:var(--amber); background:rgba(245,166,35,0.08); padding:2px 6px; border-radius:4px;">python serial_bridge.py --port COM3 --baud 115200</code>
-        — this relays Arduino serial output to WebSocket so the dashboard receives live data.
-        &nbsp;|&nbsp; Or enable <strong style="color:var(--amber)">Demo Mode</strong> below to simulate sensor readings.
-        &nbsp;|&nbsp; <a href="serial_bridge.py" download>Download serial_bridge.py</a>
+        ⚡ <strong style="color:var(--text)">How to get live data:</strong>
+        Run <code
+          style="color:var(--amber); background:rgba(245,166,35,0.08); padding:2px 6px; border-radius:4px;">python solar_logger.py --port COM3</code>
+        in a terminal — it logs data <em>and</em> acts as the WebSocket server on port 8765.
+        The dashboard will auto-connect and update in real time.
+        &nbsp;|&nbsp; Use <strong style="color:var(--amber)">Demo Mode</strong> below if the Arduino is not connected.
       </div>
       <div style="margin-top:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <div class="demo-toggle" id="demo-toggle" onclick="toggleDemo()">
@@ -1220,7 +1220,8 @@
         setStatus('connected', 'Connected');
         document.getElementById('btn-connect').style.display = 'none';
         document.getElementById('btn-disconnect').style.display = '';
-        appendLog(null, '⚡', 'WebSocket', 'Connected to ' + url);
+        appendLog(null, '⚡', 'WebSocket', 'Connected to ' + url + ' — waiting for first reading (every 30 s)…');
+        setStatus('connected', 'Connected — Waiting…');
       };
 
       ws.onmessage = (evt) => {
@@ -1244,12 +1245,32 @@
     }
 
     // ═══════════════════════════════════════════
-    //   PARSE ARDUINO SERIAL
-    //   Format:  "Voltage (V): 5.12"
+    //   PARSE INCOMING MESSAGE
+    //   Supports JSON (solar_logger.py) and legacy key:value text
     // ═══════════════════════════════════════════
     let partialData = {};
 
     function parseSerial(raw) {
+      raw = raw.trim();
+      if (!raw) return;
+
+      // ── JSON path (solar_logger.py sends this) ──────────────────────
+      if (raw.startsWith('{')) {
+        try {
+          const d = JSON.parse(raw);
+          // Validate that at least voltage and tilt exist
+          if (d.voltage !== undefined && d.tilt !== undefined) {
+            ingestPacket(d);
+            setStatus('connected', 'Connected • Live');
+            return;
+          }
+        } catch(e) {
+          appendLog(null, '⚠️', 'Parse', 'JSON error: ' + e.message);
+        }
+        return;
+      }
+
+      // ── Legacy key:value fallback ───────────────────────────────────
       const lines = raw.split('\n');
       for (let line of lines) {
         line = line.trim();
@@ -1267,9 +1288,10 @@
         else if (key.includes('temp')) partialData.temp = val;
         else if (key.includes('tilt')) partialData.tilt = val;
 
-        // Emit full packet when tilt arrives (last field in loop)
+        // Emit full packet when tilt arrives (last field)
         if (key.includes('tilt') && partialData.voltage !== undefined) {
           ingestPacket({ ...partialData });
+          setStatus('connected', 'Connected • Live');
           partialData = {};
         }
       }
@@ -1279,7 +1301,13 @@
     //   INGEST + CALCULATE
     // ═══════════════════════════════════════════
     function ingestPacket(d) {
-      const { voltage, current, power, lux, temp, tilt } = d;
+      // Null-safe extraction with sensible defaults
+      const voltage = (d.voltage != null && isFinite(d.voltage)) ? d.voltage : 0;
+      const current = (d.current != null && isFinite(d.current)) ? d.current : 0;
+      const power   = (d.power   != null && isFinite(d.power))   ? d.power   : 0;
+      const lux     = (d.lux     != null && isFinite(d.lux))     ? d.lux     : 0;
+      const temp    = (d.temp    != null && isFinite(d.temp))    ? d.temp    : 25;
+      const tilt    = (d.tilt    != null && isFinite(d.tilt))    ? d.tilt    : 0;
 
       // Thermal derating
       const corrFactor = 1 + GAMMA * (temp - T_REF);
@@ -1303,8 +1331,8 @@
       if (tilt > tiltMax) tiltMax = tilt;
       tiltSum += tilt; tiltCount++;
 
-      // UI updates
-      updateSensorCards(d);
+      // UI updates — use safe local vars, not raw d
+      updateSensorCards({ voltage, current, power, lux, temp, tilt });
       updateCalcCards(power, lux, temp, tilt, pcorr, eta, corrFactor);
       updateGauge(tilt);
       updateSparklines();
@@ -1534,12 +1562,16 @@
       sw.classList.toggle('on', demoMode);
 
       if (demoMode) {
+        // Turning demo ON: disconnect any live WS first
+        if (ws) { ws.close(); ws = null; }
         setStatus('demo', 'Demo Mode');
         appendLog(null, '🎭', 'DEMO', 'Simulated data active');
         runDemo();
       } else {
+        // Turning demo OFF: stop demo and auto-try live connection
         clearInterval(demoTimer);
-        setStatus('disconnected', 'Disconnected');
+        appendLog(null, '🔌', 'Live', 'Demo stopped — attempting live WebSocket connection…');
+        connectWS();
       }
     }
 
@@ -1583,13 +1615,47 @@
       resizeTimer = setTimeout(updateSparklines, 100);
     });
 
-    // Auto-start demo mode on load so user sees the dashboard alive
+    // On load: try live WebSocket first, fall back to Demo Mode after 2 s
     window.addEventListener('load', () => {
       setTimeout(() => {
-        demoMode = true;
-        document.getElementById('demo-switch').classList.add('on');
-        setStatus('demo', 'Demo Mode');
-        runDemo();
+        const url = document.getElementById('ws-url').value.trim();
+        setStatus('demo', '⏳ Connecting to logger…');
+        appendLog(null, '⏳', 'Init', 'Trying to connect to solar_logger.py at ' + url);
+
+        const testWs = new WebSocket(url);
+        let connected = false;
+
+        testWs.onopen = () => {
+          connected = true;
+          // Hand off to the real connectWS flow
+          testWs.close();
+          connectWS();
+        };
+
+        testWs.onerror = () => {
+          if (!connected) {
+            // Logger not running — start demo so dashboard looks alive
+            demoMode = true;
+            document.getElementById('demo-switch').classList.add('on');
+            setStatus('demo', 'Demo Mode');
+            appendLog(null, '🎭', 'DEMO', 'Logger not detected — showing simulated data. Run solar_logger.py to go live.');
+            runDemo();
+          }
+        };
+
+        // Fallback timeout: if WS hangs in CONNECTING state for >2 s, go to demo
+        setTimeout(() => {
+          if (!connected && testWs.readyState !== WebSocket.OPEN) {
+            testWs.close();
+            if (!demoMode) {
+              demoMode = true;
+              document.getElementById('demo-switch').classList.add('on');
+              setStatus('demo', 'Demo Mode');
+              appendLog(null, '🎭', 'DEMO', 'Logger not detected — showing simulated data.');
+              runDemo();
+            }
+          }
+        }, 2000);
       }, 600);
     });
   </script>
