@@ -372,15 +372,14 @@ def print_summary(csv_path):
 
 
 def serial_logging_session(port, baud, angle, session, date_str, simulate=False, sim_speedup=True):
-    """Handles the 60-minute logging session, reading either from serial or mock generator."""
+    """Handles the logging session, reading either from serial or mock generator.
+    Runs indefinitely until user presses Ctrl+C.
+    """
     csv_filename = f"solar_{angle}deg_{session}_{date_str}.csv"
     
     print(f"\n[Logging] Starting session: Angle={angle} deg, Session={session}, Date={date_str}")
     print(f"[Logging] Data will be recorded in: {csv_filename}")
-    
-    # Total samples needed for exactly 60 minutes with 30s intervals
-    # 60 * 2 samples/min = 120 samples
-    total_samples = 120
+    print(f"[Logging] Logging will continue indefinitely. Press Ctrl+C to stop.")
     
     if simulate and sim_speedup:
         # Simulation speedup: 0.1 second = 30 seconds (12 seconds total runtime)
@@ -427,7 +426,7 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
     cumulative_wh_sum = 0.0
 
     try:
-        while count < total_samples:
+        while True:
             row_data = None
             sys_time_str = None
             
@@ -594,10 +593,6 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
             
             count += 1
             
-            # Print live console update
-            percent = (count / total_samples) * 100
-            bar = "#" * int(percent // 5) + "-" * (20 - int(percent // 5))
-            
             # Display stats
             lux_val = row_data[2]
             temp_val = row_data[3]
@@ -605,8 +600,7 @@ def serial_logging_session(port, baud, angle, session, date_str, simulate=False,
             cum_wh = row_data[10]
             
             sys.stdout.write(
-                f"\rProgress: [{bar}] {percent:5.1f}% | Row {count:3d}/{total_samples} | "
-                f"Power: {p_val:5.3f}W | Temp: {temp_val:4.1f} C | Lux: {lux_val:7.1f} | Wh: {cum_wh:7.5f}"
+                f"\rRow {count:5d} | Power: {p_val:5.3f}W | Temp: {temp_val:4.1f} C | Lux: {lux_val:7.1f} | Wh: {cum_wh:7.5f}"
             )
             sys.stdout.flush()
 
@@ -695,7 +689,7 @@ def main():
             
             input("Press Enter to begin logging...")
             
-            # Run session (60 mins)
+            # Run session
             serial_logging_session(
                 port=port,
                 baud=BAUD_RATE,
