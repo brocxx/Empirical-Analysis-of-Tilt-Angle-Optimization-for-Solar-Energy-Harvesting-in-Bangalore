@@ -1,1234 +1,1664 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solar Tilt Dashboard — IdeaLab EL</title>
-<meta name="description" content="Live sensor dashboard for empirical solar tilt-angle optimization study at 12.97°N — RV College of Engineering.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --amber:    #F5A623;
-    --amber-dim:#c47c0a;
-    --orange:   #FF6B35;
-    --green:    #4ade80;
-    --red:      #f87171;
-    --bg:       #080808;
-    --surface:  #111111;
-    --card:     #181818;
-    --card2:    #1e1e1e;
-    --border:   #252525;
-    --text:     #f0f0f0;
-    --muted:    #888;
-    --dimmer:   #555;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Tilt Dashboard </title>
+  <meta name="description"
+    content="Live sensor dashboard for empirical solar tilt-angle optimization study at 12.97°N Bengaluru, India. ">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --amber: #F5A623;
+      --amber-dim: #c47c0a;
+      --orange: #FF6B35;
+      --green: #4ade80;
+      --red: #f87171;
+      --bg: #080808;
+      --surface: #111111;
+      --card: #181818;
+      --card2: #1e1e1e;
+      --border: #252525;
+      --text: #f0f0f0;
+      --muted: #888;
+      --dimmer: #555;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  html, body {
-    width: 100%; min-height: 100vh;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    overflow-x: hidden;
-  }
+    html,
+    body {
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+    }
 
-  /* ─── Mesh ambient glow ─── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(245,166,35,0.06) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 40% at 10% 90%, rgba(255,107,53,0.04) 0%, transparent 60%);
-  }
+    /* ─── Mesh ambient glow ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 80% 10%, rgba(245, 166, 35, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 10% 90%, rgba(255, 107, 53, 0.04) 0%, transparent 60%);
+    }
 
-  /* ─── TOP BAR ─── */
-  header {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 32px; height: 60px;
-    background: rgba(8,8,8,0.85);
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-  }
-  .logo {
-    display: flex; align-items: center; gap: 12px;
-  }
-  .logo-icon {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: linear-gradient(135deg, var(--amber), var(--orange));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-  }
-  .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700; font-size: 15px; letter-spacing: -0.02em;
-  }
-  .logo-sub {
-    font-size: 11px; color: var(--muted);
-    font-family: 'DM Mono', monospace; letter-spacing: 0.05em;
-    margin-top: 1px;
-  }
+    /* ─── TOP BAR ─── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 60px;
+      background: rgba(8, 8, 8, 0.85);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
 
-  .header-right {
-    display: flex; align-items: center; gap: 16px;
-  }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-  #status-pill {
-    display: flex; align-items: center; gap: 7px;
-    padding: 6px 14px; border-radius: 20px;
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    border: 1px solid var(--border);
-    background: rgba(255,255,255,0.03);
-    transition: all 0.3s;
-    cursor: default;
-  }
-  #status-pill.connected {
-    border-color: rgba(74,222,128,0.3);
-    background: rgba(74,222,128,0.06);
-    color: var(--green);
-  }
-  #status-pill.disconnected {
-    border-color: rgba(248,113,113,0.3);
-    background: rgba(248,113,113,0.06);
-    color: var(--red);
-  }
-  #status-pill.demo {
-    border-color: rgba(245,166,35,0.3);
-    background: rgba(245,166,35,0.06);
-    color: var(--amber);
-  }
-  .status-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: currentColor;
-    animation: blink 1.8s ease-in-out infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--amber), var(--orange));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
 
-  .header-time {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; color: var(--muted);
-  }
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
 
-  .tilt-badge {
-    padding: 5px 12px; border-radius: 8px;
-    background: rgba(245,166,35,0.08);
-    border: 1px solid rgba(245,166,35,0.2);
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    color: var(--amber); letter-spacing: 0.04em;
-  }
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+      margin-top: 1px;
+    }
 
-  /* ─── MAIN LAYOUT ─── */
-  main {
-    position: relative; z-index: 1;
-    padding: 28px 32px 40px;
-    max-width: 1600px; margin: 0 auto;
-  }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-  /* ─── Section Label ─── */
-  .section-tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--amber);
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 18px;
-  }
-  .section-tag::before {
-    content: ''; width: 20px; height: 1px; background: var(--amber);
-  }
+    #status-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      transition: all 0.3s;
+      cursor: default;
+    }
 
-  /* ─── GRID ROWS ─── */
-  .grid-6 {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
+    #status-pill.connected {
+      border-color: rgba(74, 222, 128, 0.3);
+      background: rgba(74, 222, 128, 0.06);
+      color: var(--green);
+    }
 
-  /* ─── SENSOR CARD ─── */
-  .sensor-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px 22px;
-    position: relative; overflow: hidden;
-    transition: border-color 0.3s, transform 0.2s;
-  }
-  .sensor-card:hover {
-    border-color: rgba(245,166,35,0.2);
-    transform: translateY(-2px);
-  }
-  .sensor-card::after {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: linear-gradient(180deg, var(--amber), var(--orange));
-    border-radius: 3px 0 0 3px;
-    opacity: 0.6;
-  }
+    #status-pill.disconnected {
+      border-color: rgba(248, 113, 113, 0.3);
+      background: rgba(248, 113, 113, 0.06);
+      color: var(--red);
+    }
 
-  .card-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--dimmer);
-    margin-bottom: 8px;
-  }
-  .card-icon {
-    position: absolute; top: 18px; right: 18px;
-    font-size: 20px; opacity: 0.5;
-  }
+    #status-pill.demo {
+      border-color: rgba(245, 166, 35, 0.3);
+      background: rgba(245, 166, 35, 0.06);
+      color: var(--amber);
+    }
 
-  .card-value {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 32px;
-    line-height: 1; letter-spacing: -0.03em;
-    color: var(--text);
-    transition: color 0.3s;
-  }
-  .card-value.amber { color: var(--amber); }
-  .card-value.orange { color: var(--orange); }
-  .card-value.green  { color: var(--green);  }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: blink 1.8s ease-in-out infinite;
+    }
 
-  .card-unit {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; color: var(--muted);
-    margin-top: 4px;
-  }
+    @keyframes blink {
 
-  .card-mini {
-    font-size: 11px; color: var(--dimmer);
-    margin-top: 8px; padding-top: 8px;
-    border-top: 1px solid var(--border);
-    font-family: 'DM Mono', monospace;
-  }
+      0%,
+      100% {
+        opacity: 1
+      }
 
-  /* ─── CALC CARD ─── */
-  .calc-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    transition: border-color 0.3s;
-  }
-  .calc-card.featured {
-    background: linear-gradient(135deg, rgba(245,166,35,0.07), rgba(255,107,53,0.04));
-    border-color: rgba(245,166,35,0.18);
-  }
-  .calc-card:hover { border-color: rgba(245,166,35,0.2); }
+      50% {
+        opacity: 0.3
+      }
+    }
 
-  .calc-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 600; font-size: 13px;
-    margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .calc-title span {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--amber);
-    padding: 2px 8px; border-radius: 12px;
-    background: rgba(245,166,35,0.1);
-  }
+    .header-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
 
-  .formula-box {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; color: var(--muted);
-    line-height: 1.7; margin-bottom: 12px;
-    letter-spacing: 0.03em;
-  }
-  .formula-box .hl { color: var(--amber); }
-  .formula-box .val { color: var(--text); font-weight: 500; }
+    .tilt-badge {
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(245, 166, 35, 0.08);
+      border: 1px solid rgba(245, 166, 35, 0.2);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 0.04em;
+    }
 
-  .result-row {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-top: 8px;
-  }
-  .result-label {
-    font-size: 12px; color: var(--muted);
-  }
-  .result-value {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700; font-size: 22px;
-    color: var(--amber); letter-spacing: -0.02em;
-  }
-  .result-value.green { color: var(--green); }
-  .result-value.orange { color: var(--orange); }
+    /* ─── MAIN LAYOUT ─── */
+    main {
+      position: relative;
+      z-index: 1;
+      padding: 28px 32px 40px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
 
-  /* ─── TILT GAUGE ─── */
-  .tilt-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    display: flex; flex-direction: column; align-items: center;
-    transition: border-color 0.3s;
-  }
-  .tilt-card:hover { border-color: rgba(245,166,35,0.2); }
+    /* ─── Section Label ─── */
+    .section-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
 
-  #tilt-gauge-svg {
-    width: 180px; height: 100px;
-    margin: 8px auto;
-  }
+    .section-tag::before {
+      content: '';
+      width: 20px;
+      height: 1px;
+      background: var(--amber);
+    }
 
-  /* ─── SPARKLINE ─── */
-  .spark-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px 22px;
-    transition: border-color 0.3s;
-  }
-  .spark-card:hover { border-color: rgba(245,166,35,0.2); }
+    /* ─── GRID ROWS ─── */
+    .grid-6 {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
 
-  .spark-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px;
-  }
-  .spark-title {
-    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px;
-  }
-  .spark-live {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    color: var(--amber); letter-spacing: 0.04em;
-  }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
 
-  canvas.sparkline {
-    width: 100%; height: 70px;
-    display: block;
-  }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
 
-  /* ─── EFFICIENCY RATING ─── */
-  .eff-bar-wrap {
-    height: 6px; background: var(--border); border-radius: 3px;
-    overflow: hidden; margin-top: 8px;
-  }
-  .eff-bar {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, var(--amber), var(--orange));
-    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-  }
+    /* ─── SENSOR CARD ─── */
+    .sensor-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+    }
 
-  /* ─── PHASE INDICATOR ─── */
-  .phase-grid {
-    display: flex; gap: 8px; margin-top: 14px;
-  }
-  .phase-chip {
-    flex: 1; text-align: center;
-    padding: 8px 6px; border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    font-family: 'DM Mono', monospace; font-size: 9px;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--dimmer);
-    transition: all 0.3s;
-  }
-  .phase-chip.active-phase {
-    border-color: rgba(245,166,35,0.35);
-    background: rgba(245,166,35,0.08);
-    color: var(--amber);
-  }
+    .sensor-card:hover {
+      border-color: rgba(245, 166, 35, 0.2);
+      transform: translateY(-2px);
+    }
 
-  /* ─── LOG PANEL ─── */
-  .log-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px; overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .log-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
-  }
-  .log-title {
-    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .log-actions { display: flex; gap: 8px; }
-  .log-btn {
-    padding: 5px 12px; border-radius: 8px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    color: var(--muted); font-size: 11px;
-    cursor: pointer; transition: all 0.2s;
-    font-family: 'DM Mono', monospace; letter-spacing: 0.04em;
-  }
-  .log-btn:hover {
-    background: rgba(245,166,35,0.1);
-    border-color: rgba(245,166,35,0.3);
-    color: var(--amber);
-  }
-  #log-body {
-    height: 160px; overflow-y: auto;
-    padding: 12px 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; line-height: 1.8;
-    color: var(--dimmer);
-  }
-  #log-body::-webkit-scrollbar { width: 4px; }
-  #log-body::-webkit-scrollbar-track { background: transparent; }
-  #log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .log-line { display: flex; gap: 12px; }
-  .log-ts { color: var(--dimmer); min-width: 80px; }
-  .log-key { color: var(--amber); min-width: 110px; }
-  .log-val { color: var(--text); }
+    .sensor-card::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--amber), var(--orange));
+      border-radius: 3px 0 0 3px;
+      opacity: 0.6;
+    }
 
-  /* ─── CONNECTION PANEL ─── */
-  .conn-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px; margin-bottom: 20px;
-  }
-  .conn-title {
-    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px;
-    margin-bottom: 16px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .conn-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;
-    align-items: end;
-  }
-  .conn-field label {
-    display: block; font-family: 'DM Mono', monospace;
-    font-size: 9px; color: var(--dimmer);
-    letter-spacing: 0.12em; text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .conn-field input, .conn-field select {
-    width: 100%; padding: 9px 12px;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text);
-    font-family: 'DM Mono', monospace; font-size: 12px;
-    outline: none; transition: border-color 0.2s;
-    appearance: none;
-  }
-  .conn-field input:focus, .conn-field select:focus {
-    border-color: rgba(245,166,35,0.4);
-  }
-  .conn-field select option { background: var(--card); }
+    .card-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--dimmer);
+      margin-bottom: 8px;
+    }
 
-  .conn-btn {
-    padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
-    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px;
-    transition: all 0.2s;
-  }
-  .conn-btn.primary {
-    background: linear-gradient(135deg, var(--amber), var(--orange));
-    color: #000;
-  }
-  .conn-btn.primary:hover { opacity: 0.9; transform: translateY(-1px); }
-  .conn-btn.secondary {
-    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: var(--muted);
-  }
-  .conn-btn.secondary:hover {
-    background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.3);
-    color: var(--red);
-  }
+    .card-icon {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      font-size: 20px;
+      opacity: 0.5;
+    }
 
-  .conn-info {
-    margin-top: 12px; padding: 10px 14px;
-    background: rgba(245,166,35,0.04);
-    border: 1px solid rgba(245,166,35,0.1);
-    border-radius: 8px;
-    font-size: 12px; color: var(--muted); line-height: 1.6;
-  }
-  .conn-info a { color: var(--amber); text-decoration: none; }
-  .conn-info a:hover { text-decoration: underline; }
+    .card-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      transition: color 0.3s;
+    }
 
-  /* ─── DEMO MODE TOGGLE ─── */
-  .demo-toggle {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 16px; border-radius: 10px;
-    background: rgba(245,166,35,0.06);
-    border: 1px solid rgba(245,166,35,0.15);
-    cursor: pointer; transition: all 0.2s;
-    font-size: 12px; color: var(--muted);
-    user-select: none;
-  }
-  .demo-toggle:hover { background: rgba(245,166,35,0.1); }
-  .toggle-switch {
-    width: 34px; height: 18px;
-    background: var(--border); border-radius: 9px;
-    position: relative; transition: background 0.3s;
-    flex-shrink: 0;
-  }
-  .toggle-switch.on { background: var(--amber); }
-  .toggle-knob {
-    position: absolute; top: 2px; left: 2px;
-    width: 14px; height: 14px; border-radius: 50%;
-    background: #fff; transition: left 0.3s;
-  }
-  .toggle-switch.on .toggle-knob { left: 18px; }
+    .card-value.amber {
+      color: var(--amber);
+    }
 
-  /* ─── FOOTER ─── */
-  footer {
-    text-align: center; padding: 24px 32px;
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    color: var(--dimmer); letter-spacing: 0.06em;
-    border-top: 1px solid var(--border);
-    position: relative; z-index: 1;
-  }
-  footer span { color: var(--amber); }
+    .card-value.orange {
+      color: var(--orange);
+    }
 
-  /* ─── ANIMATIONS ─── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .sensor-card, .calc-card, .tilt-card, .spark-card {
-    animation: fadeUp 0.5s ease both;
-  }
-  .sensor-card:nth-child(1) { animation-delay: 0.05s; }
-  .sensor-card:nth-child(2) { animation-delay: 0.10s; }
-  .sensor-card:nth-child(3) { animation-delay: 0.15s; }
-  .sensor-card:nth-child(4) { animation-delay: 0.20s; }
-  .sensor-card:nth-child(5) { animation-delay: 0.25s; }
-  .sensor-card:nth-child(6) { animation-delay: 0.30s; }
+    .card-value.green {
+      color: var(--green);
+    }
 
-  /* ─── TOOLTIP ─── */
-  [data-tip] { position: relative; cursor: help; }
-  [data-tip]::after {
-    content: attr(data-tip);
-    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
-    background: var(--card2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 6px 10px;
-    font-family: 'DM Sans', sans-serif; font-size: 11px;
-    color: var(--muted); white-space: nowrap;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s; z-index: 99;
-  }
-  [data-tip]:hover::after { opacity: 1; }
+    .card-unit {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
-  /* ─── RESPONSIVE ─── */
-  @media (max-width: 1100px) {
-    .grid-6 { grid-template-columns: repeat(3, 1fr); }
-    .grid-3 { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 700px) {
-    main { padding: 16px; }
-    .grid-6, .grid-3, .grid-2 { grid-template-columns: 1fr; }
-    header { padding: 0 16px; }
-    .conn-grid { grid-template-columns: 1fr 1fr; }
-  }
-</style>
+    .card-mini {
+      font-size: 11px;
+      color: var(--dimmer);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ─── CALC CARD ─── */
+    .calc-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: border-color 0.3s;
+    }
+
+    .calc-card.featured {
+      background: linear-gradient(135deg, rgba(245, 166, 35, 0.07), rgba(255, 107, 53, 0.04));
+      border-color: rgba(245, 166, 35, 0.18);
+    }
+
+    .calc-card:hover {
+      border-color: rgba(245, 166, 35, 0.2);
+    }
+
+    .calc-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .calc-title span {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(245, 166, 35, 0.1);
+    }
+
+    .formula-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
+    }
+
+    .formula-box .hl {
+      color: var(--amber);
+    }
+
+    .formula-box .val {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 8px;
+    }
+
+    .result-label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .result-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: var(--amber);
+      letter-spacing: -0.02em;
+    }
+
+    .result-value.green {
+      color: var(--green);
+    }
+
+    .result-value.orange {
+      color: var(--orange);
+    }
+
+    /* ─── TILT GAUGE ─── */
+    .tilt-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: border-color 0.3s;
+    }
+
+    .tilt-card:hover {
+      border-color: rgba(245, 166, 35, 0.2);
+    }
+
+    #tilt-gauge-svg {
+      width: 180px;
+      height: 100px;
+      margin: 8px auto;
+    }
+
+    /* ─── SPARKLINE ─── */
+    .spark-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      transition: border-color 0.3s;
+    }
+
+    .spark-card:hover {
+      border-color: rgba(245, 166, 35, 0.2);
+    }
+
+    .spark-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .spark-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .spark-live {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 0.04em;
+    }
+
+    canvas.sparkline {
+      width: 100%;
+      height: 70px;
+      display: block;
+    }
+
+    /* ─── EFFICIENCY RATING ─── */
+    .eff-bar-wrap {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .eff-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--amber), var(--orange));
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── PHASE INDICATOR ─── */
+    .phase-grid {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .phase-chip {
+      flex: 1;
+      text-align: center;
+      padding: 8px 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--dimmer);
+      transition: all 0.3s;
+    }
+
+    .phase-chip.active-phase {
+      border-color: rgba(245, 166, 35, 0.35);
+      background: rgba(245, 166, 35, 0.08);
+      color: var(--amber);
+    }
+
+    /* ─── LOG PANEL ─── */
+    .log-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .log-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-btn {
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .log-btn:hover {
+      background: rgba(245, 166, 35, 0.1);
+      border-color: rgba(245, 166, 35, 0.3);
+      color: var(--amber);
+    }
+
+    #log-body {
+      height: 160px;
+      overflow-y: auto;
+      padding: 12px 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      line-height: 1.8;
+      color: var(--dimmer);
+    }
+
+    #log-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #log-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #log-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .log-line {
+      display: flex;
+      gap: 12px;
+    }
+
+    .log-ts {
+      color: var(--dimmer);
+      min-width: 80px;
+    }
+
+    .log-key {
+      color: var(--amber);
+      min-width: 110px;
+    }
+
+    .log-val {
+      color: var(--text);
+    }
+
+    /* ─── CONNECTION PANEL ─── */
+    .conn-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .conn-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .conn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .conn-field label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--dimmer);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .conn-field input,
+    .conn-field select {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+
+    .conn-field input:focus,
+    .conn-field select:focus {
+      border-color: rgba(245, 166, 35, 0.4);
+    }
+
+    .conn-field select option {
+      background: var(--card);
+    }
+
+    .conn-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .conn-btn.primary {
+      background: linear-gradient(135deg, var(--amber), var(--orange));
+      color: #000;
+    }
+
+    .conn-btn.primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .conn-btn.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .conn-btn.secondary:hover {
+      background: rgba(248, 113, 113, 0.08);
+      border-color: rgba(248, 113, 113, 0.3);
+      color: var(--red);
+    }
+
+    .conn-info {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(245, 166, 35, 0.04);
+      border: 1px solid rgba(245, 166, 35, 0.1);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .conn-info a {
+      color: var(--amber);
+      text-decoration: none;
+    }
+
+    .conn-info a:hover {
+      text-decoration: underline;
+    }
+
+    /* ─── DEMO MODE TOGGLE ─── */
+    .demo-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: rgba(245, 166, 35, 0.06);
+      border: 1px solid rgba(245, 166, 35, 0.15);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    .demo-toggle:hover {
+      background: rgba(245, 166, 35, 0.1);
+    }
+
+    .toggle-switch {
+      width: 34px;
+      height: 18px;
+      background: var(--border);
+      border-radius: 9px;
+      position: relative;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch.on {
+      background: var(--amber);
+    }
+
+    .toggle-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      transition: left 0.3s;
+    }
+
+    .toggle-switch.on .toggle-knob {
+      left: 18px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      text-align: center;
+      padding: 24px 32px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--dimmer);
+      letter-spacing: 0.06em;
+      border-top: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    footer span {
+      color: var(--amber);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sensor-card,
+    .calc-card,
+    .tilt-card,
+    .spark-card {
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .sensor-card:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .sensor-card:nth-child(2) {
+      animation-delay: 0.10s;
+    }
+
+    .sensor-card:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .sensor-card:nth-child(4) {
+      animation-delay: 0.20s;
+    }
+
+    .sensor-card:nth-child(5) {
+      animation-delay: 0.25s;
+    }
+
+    .sensor-card:nth-child(6) {
+      animation-delay: 0.30s;
+    }
+
+    /* ─── TOOLTIP ─── */
+    [data-tip] {
+      position: relative;
+      cursor: help;
+    }
+
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 99;
+    }
+
+    [data-tip]:hover::after {
+      opacity: 1;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1100px) {
+      .grid-6 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 700px) {
+      main {
+        padding: 16px;
+      }
+
+      .grid-6,
+      .grid-3,
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        padding: 0 16px;
+      }
+
+      .conn-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ─── HEADER ─── -->
-<header>
-  <div class="logo">
-    <div class="logo-icon">☀️</div>
-    <div>
-      <div class="logo-text">Solar Tilt Dashboard</div>
-      <div class="logo-sub">RV College of Engineering · EL Phase-I · 12.97°N</div>
+  <!-- ─── HEADER ─── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">☀️</div>
+      <div>
+        <div class="logo-text">Solar Tilt Dashboard</div>
+        <div class="logo-sub">Bengalur· 12.97°N</div>
+      </div>
     </div>
-  </div>
-  <div class="header-right">
-    <div class="tilt-badge" id="header-tilt">Tilt: —°</div>
-    <div id="status-pill" class="disconnected">
-      <div class="status-dot"></div>
-      <span id="status-text">Disconnected</span>
+    <div class="header-right">
+      <div class="tilt-badge" id="header-tilt">Tilt: —°</div>
+      <div id="status-pill" class="disconnected">
+        <div class="status-dot"></div>
+        <span id="status-text">Disconnected</span>
+      </div>
+      <div class="header-time" id="clock">--:--:--</div>
     </div>
-    <div class="header-time" id="clock">--:--:--</div>
-  </div>
-</header>
+  </header>
 
-<!-- ─── MAIN ─── -->
-<main>
+  <!-- ─── MAIN ─── -->
+  <main>
 
-  <!-- CONNECTION PANEL -->
-  <div class="conn-card">
-    <div class="conn-title">
-      🔌 Arduino Serial Connection
-    </div>
-    <div class="conn-grid">
-      <div class="conn-field">
-        <label>WebSocket URL</label>
-        <input type="text" id="ws-url" value="ws://localhost:8765" placeholder="ws://localhost:8765">
+    <!-- CONNECTION PANEL -->
+    <div class="conn-card">
+      <div class="conn-title">
+        🔌 Arduino Serial Connection
       </div>
-      <div class="conn-field">
-        <label>Serial Port (bridge)</label>
-        <input type="text" id="serial-port" value="COM3" placeholder="COM3 or /dev/ttyUSB0">
-      </div>
-      <div class="conn-field">
-        <label>Baud Rate</label>
-        <select id="baud-rate">
-          <option value="9600">9600</option>
-          <option value="115200" selected>115200</option>
-        </select>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button class="conn-btn primary" id="btn-connect" onclick="connectWS()">Connect</button>
-        <button class="conn-btn secondary" id="btn-disconnect" onclick="disconnectWS()" style="display:none;">Disconnect</button>
-      </div>
-    </div>
-    <div class="conn-info">
-      ⚡ <strong style="color:var(--text)">How to get serial data into this dashboard:</strong>
-      Run the Python bridge: <code style="color:var(--amber); background:rgba(245,166,35,0.08); padding:2px 6px; border-radius:4px;">python serial_bridge.py --port COM3 --baud 115200</code>
-      — this relays Arduino serial output to WebSocket so the dashboard receives live data.
-      &nbsp;|&nbsp; Or enable <strong style="color:var(--amber)">Demo Mode</strong> below to simulate sensor readings.
-      &nbsp;|&nbsp; <a href="serial_bridge.py" download>Download serial_bridge.py</a>
-    </div>
-    <div style="margin-top:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      <div class="demo-toggle" id="demo-toggle" onclick="toggleDemo()">
-        <div class="toggle-switch" id="demo-switch"><div class="toggle-knob"></div></div>
-        Demo Mode (simulated sensor readings)
-      </div>
-      <div style="font-size:11px; color:var(--dimmer); font-family:'DM Mono',monospace;">
-        γ = 0.0045 /°C &nbsp;|&nbsp; T_ref = 25°C &nbsp;|&nbsp; 12.97°N Bengaluru
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION: LIVE READINGS -->
-  <div class="section-tag">Live Sensor Readings</div>
-  <div class="grid-6">
-    <div class="sensor-card" data-tip="INA219 power monitor">
-      <div class="card-label">Voltage</div>
-      <div class="card-icon">⚡</div>
-      <div class="card-value amber" id="val-voltage">—</div>
-      <div class="card-unit">Volts (V)</div>
-      <div class="card-mini" id="mini-voltage">INA219</div>
-    </div>
-    <div class="sensor-card" data-tip="INA219 current shunt">
-      <div class="card-label">Current</div>
-      <div class="card-icon">〰️</div>
-      <div class="card-value" id="val-current">—</div>
-      <div class="card-unit">Milliamps (mA)</div>
-      <div class="card-mini" id="mini-current">INA219</div>
-    </div>
-    <div class="sensor-card" data-tip="Raw panel power output">
-      <div class="card-label">Raw Power</div>
-      <div class="card-icon">🔋</div>
-      <div class="card-value orange" id="val-power">—</div>
-      <div class="card-unit">Milliwatts (mW)</div>
-      <div class="card-mini" id="mini-power">INA219</div>
-    </div>
-    <div class="sensor-card" data-tip="BH1750 ambient irradiance">
-      <div class="card-label">Irradiance</div>
-      <div class="card-icon">🌤️</div>
-      <div class="card-value" id="val-lux">—</div>
-      <div class="card-unit">Lux</div>
-      <div class="card-mini" id="mini-lux">BH1750</div>
-    </div>
-    <div class="sensor-card" data-tip="DS18B20 panel surface temperature">
-      <div class="card-label">Temperature</div>
-      <div class="card-icon">🌡️</div>
-      <div class="card-value" id="val-temp">—</div>
-      <div class="card-unit">Celsius (°C)</div>
-      <div class="card-mini" id="mini-temp">DS18B20</div>
-    </div>
-    <div class="sensor-card" data-tip="MPU6050 gyroscope/accelerometer">
-      <div class="card-label">Tilt Angle</div>
-      <div class="card-icon">📐</div>
-      <div class="card-value green" id="val-tilt">—</div>
-      <div class="card-unit">Degrees (°)</div>
-      <div class="card-mini" id="mini-tilt">MPU6050</div>
-    </div>
-  </div>
-
-  <!-- SECTION: CALCULATIONS -->
-  <div class="section-tag">Derived Calculations</div>
-  <div class="grid-3">
-
-    <!-- Thermal Derating -->
-    <div class="calc-card featured">
-      <div class="calc-title">Thermal Derating <span>Phase A</span></div>
-      <div class="formula-box">
-        P<sub style="font-size:9px">corr</sub> = P<sub style="font-size:9px">raw</sub> · [1 + <span class="hl">γ</span>·(<span class="hl">T</span> − 25)]
-        <br>
-        = <span class="val" id="f-power">—</span> · [1 + 0.0045·(<span class="val" id="f-temp">—</span> − 25)]
-        <br>
-        = <span class="val amber" id="f-pcorr-full">—</span>
-      </div>
-      <div class="result-row">
-        <span class="result-label">P<sub>corrected</sub></span>
-        <span class="result-value" id="val-pcorr">— mW</span>
-      </div>
-      <div class="eff-bar-wrap" style="margin-top:10px;">
-        <div class="eff-bar" id="thermal-bar" style="width:0%"></div>
-      </div>
-      <div style="font-size:10px; color:var(--dimmer); margin-top:4px; font-family:'DM Mono',monospace;" id="thermal-note">
-        Thermal correction factor: —
-      </div>
-    </div>
-
-    <!-- Relative Efficiency -->
-    <div class="calc-card">
-      <div class="calc-title">Relative Efficiency η<sub>rel</sub> <span>Normalised</span></div>
-      <div class="formula-box">
-        η<sub style="font-size:9px">rel</sub> = P<sub style="font-size:9px">corr</sub> / G<sub style="font-size:9px">ambient</sub>
-        <br>
-        = <span class="val" id="f-eff-p">—</span> / <span class="val" id="f-eff-g">—</span>
-        <br>
-        = <span class="val amber" id="f-eff-full">—</span> mW/lux
-      </div>
-      <div class="result-row">
-        <span class="result-label">Efficiency Ratio</span>
-        <span class="result-value green" id="val-eta">— mW/lux</span>
-      </div>
-      <div style="margin-top:12px;">
-        <div style="font-size:11px; color:var(--dimmer); margin-bottom:6px; font-family:'DM Mono',monospace;">
-          Relative capture efficiency
+      <div class="conn-grid">
+        <div class="conn-field">
+          <label>WebSocket URL</label>
+          <input type="text" id="ws-url" value="ws://localhost:8765" placeholder="ws://localhost:8765">
         </div>
-        <div class="eff-bar-wrap">
-          <div class="eff-bar" id="eta-bar" style="width:0%; background: linear-gradient(90deg,#4ade80,#22c55e);"></div>
+        <div class="conn-field">
+          <label>Serial Port (bridge)</label>
+          <input type="text" id="serial-port" value="COM5" placeholder="COM5 or /dev/ttyUSB0">
+        </div>
+        <div class="conn-field">
+          <label>Baud Rate</label>
+          <select id="baud-rate">
+            <option value="9600">9600</option>
+            <option value="115200" selected>115200</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="conn-btn primary" id="btn-connect" onclick="connectWS()">Connect</button>
+          <button class="conn-btn secondary" id="btn-disconnect" onclick="disconnectWS()"
+            style="display:none;">Disconnect</button>
         </div>
       </div>
-      <div class="phase-grid">
-        <div class="phase-chip" id="phase-low">5° Low</div>
-        <div class="phase-chip" id="phase-mod">13° Mod</div>
-        <div class="phase-chip" id="phase-steep">25° Steep</div>
+      <div class="conn-info">
+        ⚡ <strong style="color:var(--text)">How to get live data:</strong>
+        Run <code
+          style="color:var(--amber); background:rgba(245,166,35,0.08); padding:2px 6px; border-radius:4px;">python solar_logger.py --port COM3</code>
+        in a terminal — it logs data <em>and</em> acts as the WebSocket server on port 8765.
+        The dashboard will auto-connect and update in real time.
+        &nbsp;|&nbsp; Use <strong style="color:var(--amber)">Demo Mode</strong> below if the Arduino is not connected.
+      </div>
+      <div style="margin-top:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div class="demo-toggle" id="demo-toggle" onclick="toggleDemo()">
+          <div class="toggle-switch" id="demo-switch">
+            <div class="toggle-knob"></div>
+          </div>
+          Demo Mode (simulated sensor readings)
+        </div>
+        <div style="font-size:11px; color:var(--dimmer); font-family:'DM Mono',monospace;">
+          γ = 0.0045 /°C &nbsp;|&nbsp; T_ref = 25°C &nbsp;|&nbsp; 12.97°N Bengaluru
+        </div>
       </div>
     </div>
 
-    <!-- Tilt gauge + angle categorization -->
-    <div class="tilt-card">
-      <div class="calc-title" style="align-self:flex-start; width:100%;">
-        Panel Tilt Position <span>MPU6050</span>
+    <!-- SECTION: LIVE READINGS -->
+    <div class="section-tag">Live Sensor Readings</div>
+    <div class="grid-6">
+      <div class="sensor-card" data-tip="INA219 power monitor">
+        <div class="card-label">Voltage</div>
+        <div class="card-icon">⚡</div>
+        <div class="card-value amber" id="val-voltage">—</div>
+        <div class="card-unit">Volts (V)</div>
+        <div class="card-mini" id="mini-voltage">INA219</div>
+      </div>
+      <div class="sensor-card" data-tip="INA219 current shunt">
+        <div class="card-label">Current</div>
+        <div class="card-icon">〰️</div>
+        <div class="card-value" id="val-current">—</div>
+        <div class="card-unit">Milliamps (mA)</div>
+        <div class="card-mini" id="mini-current">INA219</div>
+      </div>
+      <div class="sensor-card" data-tip="Raw panel power output">
+        <div class="card-label">Raw Power</div>
+        <div class="card-icon">🔋</div>
+        <div class="card-value orange" id="val-power">—</div>
+        <div class="card-unit">Milliwatts (mW)</div>
+        <div class="card-mini" id="mini-power">INA219</div>
+      </div>
+      <div class="sensor-card" data-tip="BH1750 ambient irradiance">
+        <div class="card-label">Irradiance</div>
+        <div class="card-icon">🌤️</div>
+        <div class="card-value" id="val-lux">—</div>
+        <div class="card-unit">Lux</div>
+        <div class="card-mini" id="mini-lux">BH1750</div>
+      </div>
+      <div class="sensor-card" data-tip="DS18B20 panel surface temperature">
+        <div class="card-label">Temperature</div>
+        <div class="card-icon">🌡️</div>
+        <div class="card-value" id="val-temp">—</div>
+        <div class="card-unit">Celsius (°C)</div>
+        <div class="card-mini" id="mini-temp">DS18B20</div>
+      </div>
+      <div class="sensor-card" data-tip="MPU6050 gyroscope/accelerometer">
+        <div class="card-label">Tilt Angle</div>
+        <div class="card-icon">📐</div>
+        <div class="card-value green" id="val-tilt">—</div>
+        <div class="card-unit">Degrees (°)</div>
+        <div class="card-mini" id="mini-tilt">MPU6050</div>
+      </div>
+    </div>
+
+    <!-- SECTION: CALCULATIONS -->
+    <div class="section-tag">Derived Calculations</div>
+    <div class="grid-3">
+
+      <!-- Thermal Derating -->
+      <div class="calc-card featured">
+        <div class="calc-title">Thermal Derating <span>Phase A</span></div>
+        <div class="formula-box">
+          P<sub style="font-size:9px">corr</sub> = P<sub style="font-size:9px">raw</sub> · [1 + <span
+            class="hl">γ</span>·(<span class="hl">T</span> − 25)]
+          <br>
+          = <span class="val" id="f-power">—</span> · [1 + 0.0045·(<span class="val" id="f-temp">—</span> − 25)]
+          <br>
+          = <span class="val amber" id="f-pcorr-full">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">P<sub>corrected</sub></span>
+          <span class="result-value" id="val-pcorr">— mW</span>
+        </div>
+        <div class="eff-bar-wrap" style="margin-top:10px;">
+          <div class="eff-bar" id="thermal-bar" style="width:0%"></div>
+        </div>
+        <div style="font-size:10px; color:var(--dimmer); margin-top:4px; font-family:'DM Mono',monospace;"
+          id="thermal-note">
+          Thermal correction factor: —
+        </div>
       </div>
 
-      <svg id="tilt-gauge-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#F5A623"/>
-            <stop offset="100%" stop-color="#FF6B35"/>
-          </linearGradient>
-        </defs>
-        <!-- Background arc -->
-        <path d="M 20 105 A 90 90 0 0 1 200 105"
-          fill="none" stroke="#252525" stroke-width="10" stroke-linecap="round"/>
-        <!-- Colored arc (progress) -->
-        <path id="gauge-arc"
-          d="M 20 105 A 90 90 0 0 1 200 105"
-          fill="none" stroke="url(#arcGrad)" stroke-width="10" stroke-linecap="round"
-          stroke-dasharray="283" stroke-dashoffset="283"
-          style="transition: stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1);"/>
-        <!-- Tick marks -->
-        <line x1="20" y1="105" x2="30" y2="105" stroke="#333" stroke-width="1.5"/>
-        <line x1="75" y1="18" x2="79" y2="27" stroke="#333" stroke-width="1.5" transform="rotate(-90 110 105)"/>
-        <line x1="200" y1="105" x2="190" y2="105" stroke="#333" stroke-width="1.5"/>
-        <!-- Labels -->
-        <text x="14" y="120" font-family="DM Mono" font-size="9" fill="#555">0°</text>
-        <text x="104" y="12" font-family="DM Mono" font-size="9" fill="#555" text-anchor="middle">45°</text>
-        <text x="196" y="120" font-family="DM Mono" font-size="9" fill="#555" text-anchor="end">90°</text>
-        <!-- Needle -->
-        <g id="gauge-needle" transform="rotate(0 110 105)">
-          <line x1="110" y1="105" x2="110" y2="22" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-          <circle cx="110" cy="105" r="5" fill="#F5A623"/>
-          <circle cx="110" cy="22" r="2.5" fill="#F5A623" opacity="0.6"/>
-        </g>
-        <!-- Center value -->
-        <text id="gauge-label" x="110" y="96" font-family="Syne" font-size="18" font-weight="800"
-          fill="#F5A623" text-anchor="middle">—°</text>
-      </svg>
-
-      <div style="width:100%; margin-top:4px;">
+      <!-- Relative Efficiency -->
+      <div class="calc-card">
+        <div class="calc-title">Relative Efficiency η<sub>rel</sub> <span>Normalised</span></div>
+        <div class="formula-box">
+          η<sub style="font-size:9px">rel</sub> = P<sub style="font-size:9px">corr</sub> / G<sub
+            style="font-size:9px">ambient</sub>
+          <br>
+          = <span class="val" id="f-eff-p">—</span> / <span class="val" id="f-eff-g">—</span>
+          <br>
+          = <span class="val amber" id="f-eff-full">—</span> mW/lux
+        </div>
+        <div class="result-row">
+          <span class="result-label">Efficiency Ratio</span>
+          <span class="result-value green" id="val-eta">— mW/lux</span>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="font-size:11px; color:var(--dimmer); margin-bottom:6px; font-family:'DM Mono',monospace;">
+            Relative capture efficiency
+          </div>
+          <div class="eff-bar-wrap">
+            <div class="eff-bar" id="eta-bar" style="width:0%; background: linear-gradient(90deg,#4ade80,#22c55e);">
+            </div>
+          </div>
+        </div>
         <div class="phase-grid">
-          <div class="phase-chip" id="g-phase-low">5° Low</div>
-          <div class="phase-chip" id="g-phase-mod">13° Moderate</div>
-          <div class="phase-chip" id="g-phase-steep">25° Steep</div>
-        </div>
-        <div style="margin-top:10px; display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:10px; color:var(--dimmer);">
-          <span>MIN: <span id="tilt-min" style="color:var(--text)">—</span>°</span>
-          <span>MAX: <span id="tilt-max" style="color:var(--text)">—</span>°</span>
-          <span>AVG: <span id="tilt-avg" style="color:var(--amber)">—</span>°</span>
+          <div class="phase-chip" id="phase-low">5° Low</div>
+          <div class="phase-chip" id="phase-mod">13° Mod</div>
+          <div class="phase-chip" id="phase-steep">25° Steep</div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- SECTION: SPARKLINES -->
-  <div class="section-tag">Live Trends (last 60 readings)</div>
-  <div class="grid-2">
-    <div class="spark-card">
-      <div class="spark-header">
-        <div class="spark-title">Corrected Power vs Time</div>
-        <div class="spark-live" id="spark-power-live">— mW</div>
+      <!-- Tilt gauge + angle categorization -->
+      <div class="tilt-card">
+        <div class="calc-title" style="align-self:flex-start; width:100%;">
+          Panel Tilt Position <span>MPU6050</span>
+        </div>
+
+        <svg id="tilt-gauge-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#F5A623" />
+              <stop offset="100%" stop-color="#FF6B35" />
+            </linearGradient>
+          </defs>
+          <!-- Background arc -->
+          <path d="M 20 105 A 90 90 0 0 1 200 105" fill="none" stroke="#252525" stroke-width="10"
+            stroke-linecap="round" />
+          <!-- Colored arc (progress) -->
+          <path id="gauge-arc" d="M 20 105 A 90 90 0 0 1 200 105" fill="none" stroke="url(#arcGrad)" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"
+            style="transition: stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1);" />
+          <!-- Tick marks -->
+          <line x1="20" y1="105" x2="30" y2="105" stroke="#333" stroke-width="1.5" />
+          <line x1="75" y1="18" x2="79" y2="27" stroke="#333" stroke-width="1.5" transform="rotate(-90 110 105)" />
+          <line x1="200" y1="105" x2="190" y2="105" stroke="#333" stroke-width="1.5" />
+          <!-- Labels -->
+          <text x="14" y="120" font-family="DM Mono" font-size="9" fill="#555">0°</text>
+          <text x="104" y="12" font-family="DM Mono" font-size="9" fill="#555" text-anchor="middle">45°</text>
+          <text x="196" y="120" font-family="DM Mono" font-size="9" fill="#555" text-anchor="end">90°</text>
+          <!-- Needle -->
+          <g id="gauge-needle" transform="rotate(0 110 105)">
+            <line x1="110" y1="105" x2="110" y2="22" stroke="#F5A623" stroke-width="2" stroke-linecap="round"
+              opacity="0.8" />
+            <circle cx="110" cy="105" r="5" fill="#F5A623" />
+            <circle cx="110" cy="22" r="2.5" fill="#F5A623" opacity="0.6" />
+          </g>
+          <!-- Center value -->
+          <text id="gauge-label" x="110" y="96" font-family="Syne" font-size="18" font-weight="800" fill="#F5A623"
+            text-anchor="middle">—°</text>
+        </svg>
+
+        <div style="width:100%; margin-top:4px;">
+          <div class="phase-grid">
+            <div class="phase-chip" id="g-phase-low">5° Low</div>
+            <div class="phase-chip" id="g-phase-mod">13° Moderate</div>
+            <div class="phase-chip" id="g-phase-steep">25° Steep</div>
+          </div>
+          <div
+            style="margin-top:10px; display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:10px; color:var(--dimmer);">
+            <span>MIN: <span id="tilt-min" style="color:var(--text)">—</span>°</span>
+            <span>MAX: <span id="tilt-max" style="color:var(--text)">—</span>°</span>
+            <span>AVG: <span id="tilt-avg" style="color:var(--amber)">—</span>°</span>
+          </div>
+        </div>
       </div>
-      <canvas class="sparkline" id="spark-power" height="70"></canvas>
     </div>
-    <div class="spark-card">
-      <div class="spark-header">
-        <div class="spark-title">Relative Efficiency (η<sub>rel</sub>) vs Time</div>
-        <div class="spark-live" id="spark-eta-live">— mW/lux</div>
-      </div>
-      <canvas class="sparkline" id="spark-eta" height="70"></canvas>
-    </div>
-  </div>
-  <div class="grid-2">
-    <div class="spark-card">
-      <div class="spark-header">
-        <div class="spark-title">Panel Temperature vs Time</div>
-        <div class="spark-live" id="spark-temp-live">— °C</div>
-      </div>
-      <canvas class="sparkline" id="spark-temp" height="70"></canvas>
-    </div>
-    <div class="spark-card">
-      <div class="spark-header">
-        <div class="spark-title">Irradiance (Lux) vs Time</div>
-        <div class="spark-live" id="spark-lux-live">— lux</div>
-      </div>
-      <canvas class="sparkline" id="spark-lux" height="70"></canvas>
-    </div>
-  </div>
 
-  <!-- SECTION: DATA LOG -->
-  <div class="section-tag">Raw Data Log</div>
-  <div class="log-card">
-    <div class="log-header">
-      <div class="log-title">📋 Serial Output Log</div>
-      <div class="log-actions">
-        <button class="log-btn" onclick="exportCSV()">⬇ Export CSV</button>
-        <button class="log-btn" onclick="clearLog()">🗑 Clear</button>
+    <!-- SECTION: SPARKLINES -->
+    <div class="section-tag">Live Trends (last 60 readings)</div>
+    <div class="grid-2">
+      <div class="spark-card">
+        <div class="spark-header">
+          <div class="spark-title">Corrected Power vs Time</div>
+          <div class="spark-live" id="spark-power-live">— mW</div>
+        </div>
+        <canvas class="sparkline" id="spark-power" height="70"></canvas>
+      </div>
+      <div class="spark-card">
+        <div class="spark-header">
+          <div class="spark-title">Relative Efficiency (η<sub>rel</sub>) vs Time</div>
+          <div class="spark-live" id="spark-eta-live">— mW/lux</div>
+        </div>
+        <canvas class="sparkline" id="spark-eta" height="70"></canvas>
       </div>
     </div>
-    <div id="log-body">
-      <div style="color:var(--dimmer); padding-top:4px; font-size:11px;">Waiting for data...</div>
+    <div class="grid-2">
+      <div class="spark-card">
+        <div class="spark-header">
+          <div class="spark-title">Panel Temperature vs Time</div>
+          <div class="spark-live" id="spark-temp-live">— °C</div>
+        </div>
+        <canvas class="sparkline" id="spark-temp" height="70"></canvas>
+      </div>
+      <div class="spark-card">
+        <div class="spark-header">
+          <div class="spark-title">Irradiance (Lux) vs Time</div>
+          <div class="spark-live" id="spark-lux-live">— lux</div>
+        </div>
+        <canvas class="sparkline" id="spark-lux" height="70"></canvas>
+      </div>
     </div>
-  </div>
 
-</main>
+    <!-- SECTION: DATA LOG -->
+    <div class="section-tag">Raw Data Log</div>
+    <div class="log-card">
+      <div class="log-header">
+        <div class="log-title">📋 Serial Output Log</div>
+        <div class="log-actions">
+          <button class="log-btn" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="log-btn" onclick="clearLog()">🗑 Clear</button>
+        </div>
+      </div>
+      <div id="log-body">
+        <div style="color:var(--dimmer); padding-top:4px; font-size:11px;">Waiting for data...</div>
+      </div>
+    </div>
 
-<footer>
-  Solar Tilt Optimization · <span>Bengaluru 12.97°N</span> · RV College of Engineering · IdeaLab EL Phase-I
-</footer>
+  </main>
 
-<script>
-// ═══════════════════════════════════════════
-//   STATE
-// ═══════════════════════════════════════════
-const GAMMA = 0.0045;
-const T_REF  = 25;
-const MAX_POINTS = 60;
-const DEMO_INTERVAL = 1000;
+  <footer>
+    Solar Tilt Optimization · <span>Bengaluru 12.97°N</span> · RV College of Engineering · IdeaLab EL Phase-I
+  </footer>
 
-let ws = null;
-let demoMode = false;
-let demoTimer = null;
-let dataLog = [];       // {ts, voltage, current, power, lux, temp, tilt, pcorr, eta}
-let histPower = [];
-let histEta   = [];
-let histTemp  = [];
-let histLux   = [];
-let tiltMin = Infinity, tiltMax = -Infinity, tiltSum = 0, tiltCount = 0;
+  <script>
+    // ═══════════════════════════════════════════
+    //   STATE
+    // ═══════════════════════════════════════════
+    const GAMMA = 0.0045;
+    const T_REF = 25;
+    const MAX_POINTS = 60;
+    const DEMO_INTERVAL = 1000;
 
-// ═══════════════════════════════════════════
-//   CLOCK
-// ═══════════════════════════════════════════
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-}
-setInterval(updateClock, 1000);
-updateClock();
+    let ws = null;
+    let demoMode = false;
+    let demoTimer = null;
+    let dataLog = [];       // {ts, voltage, current, power, lux, temp, tilt, pcorr, eta}
+    let histPower = [];
+    let histEta = [];
+    let histTemp = [];
+    let histLux = [];
+    let tiltMin = Infinity, tiltMax = -Infinity, tiltSum = 0, tiltCount = 0;
 
-// ═══════════════════════════════════════════
-//   WEBSOCKET CONNECTION
-// ═══════════════════════════════════════════
-function connectWS() {
-  const url = document.getElementById('ws-url').value.trim();
-  if (ws) ws.close();
-  setStatus('demo', '⏳ Connecting…');
-  ws = new WebSocket(url);
-
-  ws.onopen = () => {
-    setStatus('connected', 'Connected');
-    document.getElementById('btn-connect').style.display = 'none';
-    document.getElementById('btn-disconnect').style.display = '';
-    appendLog(null, '⚡', 'WebSocket', 'Connected to ' + url);
-  };
-
-  ws.onmessage = (evt) => {
-    parseSerial(evt.data);
-  };
-
-  ws.onerror = () => {
-    setStatus('disconnected', 'Connection Failed');
-    appendLog(null, '✖', 'WebSocket', 'Failed — enable Demo Mode or check bridge');
-  };
-
-  ws.onclose = () => {
-    setStatus('disconnected', 'Disconnected');
-    document.getElementById('btn-connect').style.display = '';
-    document.getElementById('btn-disconnect').style.display = 'none';
-  };
-}
-
-function disconnectWS() {
-  if (ws) { ws.close(); ws = null; }
-}
-
-// ═══════════════════════════════════════════
-//   PARSE ARDUINO SERIAL
-//   Format:  "Voltage (V): 5.12"
-// ═══════════════════════════════════════════
-let partialData = {};
-
-function parseSerial(raw) {
-  const lines = raw.split('\n');
-  for (let line of lines) {
-    line = line.trim();
-    if (!line || line.startsWith('---') || line.startsWith('Init')) continue;
-
-    const m = line.match(/^(.+?):\s*([\-\d\.]+)/);
-    if (!m) continue;
-    const key = m[1].trim().toLowerCase();
-    const val = parseFloat(m[2]);
-
-    if (key.includes('voltage'))     partialData.voltage  = val;
-    else if (key.includes('current'))partialData.current  = val;
-    else if (key.includes('power'))  partialData.power    = val;
-    else if (key.includes('lux'))    partialData.lux      = val;
-    else if (key.includes('temp'))   partialData.temp     = val;
-    else if (key.includes('tilt'))   partialData.tilt     = val;
-
-    // Emit full packet when tilt arrives (last field in loop)
-    if (key.includes('tilt') && partialData.voltage !== undefined) {
-      ingestPacket({ ...partialData });
-      partialData = {};
+    // ═══════════════════════════════════════════
+    //   CLOCK
+    // ═══════════════════════════════════════════
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent =
+        now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
-  }
-}
+    setInterval(updateClock, 1000);
+    updateClock();
 
-// ═══════════════════════════════════════════
-//   INGEST + CALCULATE
-// ═══════════════════════════════════════════
-function ingestPacket(d) {
-  const { voltage, current, power, lux, temp, tilt } = d;
+    // ═══════════════════════════════════════════
+    //   WEBSOCKET CONNECTION
+    // ═══════════════════════════════════════════
+    function connectWS() {
+      const url = document.getElementById('ws-url').value.trim();
+      if (ws) ws.close();
+      setStatus('demo', '⏳ Connecting…');
+      ws = new WebSocket(url);
 
-  // Thermal derating
-  const corrFactor = 1 + GAMMA * (temp - T_REF);
-  const pcorr = power * corrFactor;
+      ws.onopen = () => {
+        setStatus('connected', 'Connected');
+        document.getElementById('btn-connect').style.display = 'none';
+        document.getElementById('btn-disconnect').style.display = '';
+        appendLog(null, '⚡', 'WebSocket', 'Connected to ' + url + ' — waiting for first reading (every 30 s)…');
+        setStatus('connected', 'Connected — Waiting…');
+      };
 
-  // Relative efficiency (avoid /0)
-  const eta = lux > 0 ? pcorr / lux : 0;
+      ws.onmessage = (evt) => {
+        parseSerial(evt.data);
+      };
 
-  const ts = new Date();
+      ws.onerror = () => {
+        setStatus('disconnected', 'Connection Failed');
+        appendLog(null, '✖', 'WebSocket', 'Failed — enable Demo Mode or check bridge');
+      };
 
-  dataLog.push({ ts, voltage, current, power, lux, temp, tilt, pcorr, eta });
+      ws.onclose = () => {
+        setStatus('disconnected', 'Disconnected');
+        document.getElementById('btn-connect').style.display = '';
+        document.getElementById('btn-disconnect').style.display = 'none';
+      };
+    }
 
-  // History arrays (capped)
-  push60(histPower, pcorr);
-  push60(histEta,   eta);
-  push60(histTemp,  temp);
-  push60(histLux,   lux);
+    function disconnectWS() {
+      if (ws) { ws.close(); ws = null; }
+    }
 
-  // Tilt stats
-  if (tilt < tiltMin) tiltMin = tilt;
-  if (tilt > tiltMax) tiltMax = tilt;
-  tiltSum += tilt; tiltCount++;
+    // ═══════════════════════════════════════════
+    //   PARSE INCOMING MESSAGE
+    //   Supports JSON (solar_logger.py) and legacy key:value text
+    // ═══════════════════════════════════════════
+    let partialData = {};
 
-  // UI updates
-  updateSensorCards(d);
-  updateCalcCards(power, lux, temp, tilt, pcorr, eta, corrFactor);
-  updateGauge(tilt);
-  updateSparklines();
-  updateTiltStats();
-  appendLog(ts, voltage, current, power, lux, temp, tilt, pcorr, eta);
-}
+    function parseSerial(raw) {
+      raw = raw.trim();
+      if (!raw) return;
 
-function push60(arr, val) {
-  arr.push(val);
-  if (arr.length > MAX_POINTS) arr.shift();
-}
+      // ── JSON path (solar_logger.py sends this) ──────────────────────
+      if (raw.startsWith('{')) {
+        try {
+          const d = JSON.parse(raw);
+          // Validate that at least voltage and tilt exist
+          if (d.voltage !== undefined && d.tilt !== undefined) {
+            ingestPacket(d);
+            setStatus('connected', 'Connected • Live');
+            return;
+          }
+        } catch(e) {
+          appendLog(null, '⚠️', 'Parse', 'JSON error: ' + e.message);
+        }
+        return;
+      }
 
-// ═══════════════════════════════════════════
-//   UI UPDATERS
-// ═══════════════════════════════════════════
-function updateSensorCards(d) {
-  setText('val-voltage', d.voltage.toFixed(2));
-  setText('val-current', d.current.toFixed(1));
-  setText('val-power',   d.power.toFixed(1));
-  setText('val-lux',     d.lux.toFixed(0));
-  setText('val-temp',    d.temp.toFixed(1));
-  setText('val-tilt',    d.tilt.toFixed(1));
+      // ── Legacy key:value fallback ───────────────────────────────────
+      const lines = raw.split('\n');
+      for (let line of lines) {
+        line = line.trim();
+        if (!line || line.startsWith('---') || line.startsWith('Init')) continue;
 
-  setText('mini-voltage', 'V · Shunt: ' + (d.voltage).toFixed(3) + 'V');
-  setText('mini-power',   d.power.toFixed(2) + ' mW raw panel');
-  setText('mini-temp',    d.temp > 35 ? '⚠ High temp — efficiency drop' : 'Panel surface °C');
+        const m = line.match(/^(.+?):\s*([\-\d\.]+)/);
+        if (!m) continue;
+        const key = m[1].trim().toLowerCase();
+        const val = parseFloat(m[2]);
 
-  setText('header-tilt', 'Tilt: ' + d.tilt.toFixed(1) + '°');
+        if (key.includes('voltage')) partialData.voltage = val;
+        else if (key.includes('current')) partialData.current = val;
+        else if (key.includes('power')) partialData.power = val;
+        else if (key.includes('lux')) partialData.lux = val;
+        else if (key.includes('temp')) partialData.temp = val;
+        else if (key.includes('tilt')) partialData.tilt = val;
 
-  // Color temp card red if overheating
-  const tv = document.getElementById('val-temp');
-  tv.className = 'card-value' + (d.temp > 40 ? ' orange' : d.temp > 50 ? ' red' : '');
-}
+        // Emit full packet when tilt arrives (last field)
+        if (key.includes('tilt') && partialData.voltage !== undefined) {
+          ingestPacket({ ...partialData });
+          setStatus('connected', 'Connected • Live');
+          partialData = {};
+        }
+      }
+    }
 
-function updateCalcCards(power, lux, temp, tilt, pcorr, eta, corrFactor) {
-  // Thermal derating
-  setText('f-power',     power.toFixed(1) + ' mW');
-  setText('f-temp',      temp.toFixed(1) + '°C');
-  setText('f-pcorr-full', pcorr.toFixed(2) + ' mW');
-  setText('val-pcorr',   pcorr.toFixed(2) + ' mW');
-  setText('thermal-note', 'Thermal factor: ' + corrFactor.toFixed(4) + ' (' + (temp > T_REF ? '−' : '+') + Math.abs(((1 - corrFactor) * 100)).toFixed(2) + '% efficiency)');
+    // ═══════════════════════════════════════════
+    //   INGEST + CALCULATE
+    // ═══════════════════════════════════════════
+    function ingestPacket(d) {
+      // Null-safe extraction with sensible defaults
+      const voltage = (d.voltage != null && isFinite(d.voltage)) ? d.voltage : 0;
+      const current = (d.current != null && isFinite(d.current)) ? d.current : 0;
+      const power   = (d.power   != null && isFinite(d.power))   ? d.power   : 0;
+      const lux     = (d.lux     != null && isFinite(d.lux))     ? d.lux     : 0;
+      const temp    = (d.temp    != null && isFinite(d.temp))    ? d.temp    : 25;
+      const tilt    = (d.tilt    != null && isFinite(d.tilt))    ? d.tilt    : 0;
 
-  // Thermal bar: 0–100% of raw power remaining (clamp 0-100)
-  const thermalPct = Math.max(0, Math.min(100, (pcorr / (power || 1)) * 100));
-  document.getElementById('thermal-bar').style.width = thermalPct + '%';
+      // Thermal derating
+      const corrFactor = 1 + GAMMA * (temp - T_REF);
+      const pcorr = power * corrFactor;
 
-  // Relative efficiency
-  setText('f-eff-p', pcorr.toFixed(2) + ' mW');
-  setText('f-eff-g', lux.toFixed(0) + ' lux');
-  setText('f-eff-full', eta.toFixed(4));
-  setText('val-eta', eta.toFixed(4) + ' mW/lux');
-  setText('spark-power-live', pcorr.toFixed(2) + ' mW');
-  setText('spark-eta-live',   eta.toFixed(4) + ' mW/lux');
+      // Relative efficiency (avoid /0)
+      const eta = lux > 0 ? pcorr / lux : 0;
 
-  // Eta bar (scale: 0 - 0.5 mW/lux as 100%)
-  const etaPct = Math.max(0, Math.min(100, (eta / 0.5) * 100));
-  document.getElementById('eta-bar').style.width = etaPct + '%';
+      const ts = new Date();
 
-  // Phase chips
-  updatePhase(tilt, 'phase-low', 'phase-mod', 'phase-steep');
-  updatePhase(tilt, 'g-phase-low', 'g-phase-mod', 'g-phase-steep');
-}
+      dataLog.push({ ts, voltage, current, power, lux, temp, tilt, pcorr, eta });
 
-function updatePhase(tilt, lowId, modId, steepId) {
-  document.getElementById(lowId).classList.remove('active-phase');
-  document.getElementById(modId).classList.remove('active-phase');
-  document.getElementById(steepId).classList.remove('active-phase');
-  if (tilt < 9)       document.getElementById(lowId).classList.add('active-phase');
-  else if (tilt < 19) document.getElementById(modId).classList.add('active-phase');
-  else                document.getElementById(steepId).classList.add('active-phase');
-}
+      // History arrays (capped)
+      push60(histPower, pcorr);
+      push60(histEta, eta);
+      push60(histTemp, temp);
+      push60(histLux, lux);
 
-function updateGauge(angle) {
-  // Arc: 0° → offset=283, 90° → offset=0
-  const clamp = Math.max(0, Math.min(90, angle));
-  const offset = 283 * (1 - clamp / 90);
-  document.getElementById('gauge-arc').style.strokeDashoffset = offset;
+      // Tilt stats
+      if (tilt < tiltMin) tiltMin = tilt;
+      if (tilt > tiltMax) tiltMax = tilt;
+      tiltSum += tilt; tiltCount++;
 
-  // Needle rotation: at 0° needle points straight up (rotate 0)
-  // arc goes from left (0°) to right (90°) → needle sweeps -90° to +90° from vertical
-  const rot = (clamp / 90) * 180 - 90;
-  document.getElementById('gauge-needle').setAttribute('transform', `rotate(${rot} 110 105)`);
+      // UI updates — use safe local vars, not raw d
+      updateSensorCards({ voltage, current, power, lux, temp, tilt });
+      updateCalcCards(power, lux, temp, tilt, pcorr, eta, corrFactor);
+      updateGauge(tilt);
+      updateSparklines();
+      updateTiltStats();
+      appendLog(ts, voltage, current, power, lux, temp, tilt, pcorr, eta);
+    }
 
-  document.getElementById('gauge-label').textContent = angle.toFixed(1) + '°';
-}
+    function push60(arr, val) {
+      arr.push(val);
+      if (arr.length > MAX_POINTS) arr.shift();
+    }
 
-function updateTiltStats() {
-  setText('tilt-min', tiltMin === Infinity ? '—' : tiltMin.toFixed(1));
-  setText('tilt-max', tiltMax === -Infinity ? '—' : tiltMax.toFixed(1));
-  setText('tilt-avg', tiltCount ? (tiltSum / tiltCount).toFixed(1) : '—');
-}
+    // ═══════════════════════════════════════════
+    //   UI UPDATERS
+    // ═══════════════════════════════════════════
+    function updateSensorCards(d) {
+      setText('val-voltage', d.voltage.toFixed(2));
+      setText('val-current', d.current.toFixed(1));
+      setText('val-power', d.power.toFixed(1));
+      setText('val-lux', d.lux.toFixed(0));
+      setText('val-temp', d.temp.toFixed(1));
+      setText('val-tilt', d.tilt.toFixed(1));
 
-// ═══════════════════════════════════════════
-//   SPARKLINES (canvas)
-// ═══════════════════════════════════════════
-function drawSparkline(canvasId, data, color1, color2) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  if (!rect.width) return;
-  canvas.width  = rect.width  * dpr;
-  canvas.height = rect.height * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const w = rect.width, h = rect.height;
+      setText('mini-voltage', 'V · Shunt: ' + (d.voltage).toFixed(3) + 'V');
+      setText('mini-power', d.power.toFixed(2) + ' mW raw panel');
+      setText('mini-temp', d.temp > 35 ? '⚠ High temp — efficiency drop' : 'Panel surface °C');
 
-  if (data.length < 2) return;
+      setText('header-tilt', 'Tilt: ' + d.tilt.toFixed(1) + '°');
 
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
+      // Color temp card red if overheating
+      const tv = document.getElementById('val-temp');
+      tv.className = 'card-value' + (d.temp > 40 ? ' orange' : d.temp > 50 ? ' red' : '');
+    }
 
-  const gradient = ctx.createLinearGradient(0, 0, w, 0);
-  gradient.addColorStop(0, color1);
-  gradient.addColorStop(1, color2);
+    function updateCalcCards(power, lux, temp, tilt, pcorr, eta, corrFactor) {
+      // Thermal derating
+      setText('f-power', power.toFixed(1) + ' mW');
+      setText('f-temp', temp.toFixed(1) + '°C');
+      setText('f-pcorr-full', pcorr.toFixed(2) + ' mW');
+      setText('val-pcorr', pcorr.toFixed(2) + ' mW');
+      setText('thermal-note', 'Thermal factor: ' + corrFactor.toFixed(4) + ' (' + (temp > T_REF ? '−' : '+') + Math.abs(((1 - corrFactor) * 100)).toFixed(2) + '% efficiency)');
 
-  // Fill gradient beneath line
-  const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
-  fillGrad.addColorStop(0, color1 + '33');
-  fillGrad.addColorStop(1, color1 + '00');
+      // Thermal bar: 0–100% of raw power remaining (clamp 0-100)
+      const thermalPct = Math.max(0, Math.min(100, (pcorr / (power || 1)) * 100));
+      document.getElementById('thermal-bar').style.width = thermalPct + '%';
 
-  ctx.clearRect(0, 0, w, h);
+      // Relative efficiency
+      setText('f-eff-p', pcorr.toFixed(2) + ' mW');
+      setText('f-eff-g', lux.toFixed(0) + ' lux');
+      setText('f-eff-full', eta.toFixed(4));
+      setText('val-eta', eta.toFixed(4) + ' mW/lux');
+      setText('spark-power-live', pcorr.toFixed(2) + ' mW');
+      setText('spark-eta-live', eta.toFixed(4) + ' mW/lux');
 
-  // Draw fill
-  ctx.beginPath();
-  data.forEach((v, i) => {
-    const x = (i / (MAX_POINTS - 1)) * w;
-    const y = h - ((v - min) / range) * (h - 8) - 4;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.lineTo(w, h); ctx.lineTo(0, h);
-  ctx.closePath();
-  ctx.fillStyle = fillGrad;
-  ctx.fill();
+      // Eta bar (scale: 0 - 0.5 mW/lux as 100%)
+      const etaPct = Math.max(0, Math.min(100, (eta / 0.5) * 100));
+      document.getElementById('eta-bar').style.width = etaPct + '%';
 
-  // Draw line
-  ctx.beginPath();
-  data.forEach((v, i) => {
-    const x = (i / (MAX_POINTS - 1)) * w;
-    const y = h - ((v - min) / range) * (h - 8) - 4;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.strokeStyle = gradient;
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.stroke();
+      // Phase chips
+      updatePhase(tilt, 'phase-low', 'phase-mod', 'phase-steep');
+      updatePhase(tilt, 'g-phase-low', 'g-phase-mod', 'g-phase-steep');
+    }
 
-  // Latest dot
-  const lastX = w;
-  const lastY = h - ((data[data.length-1] - min) / range) * (h - 8) - 4;
-  ctx.beginPath();
-  ctx.arc(lastX - 2, lastY, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = color2;
-  ctx.fill();
-}
+    function updatePhase(tilt, lowId, modId, steepId) {
+      document.getElementById(lowId).classList.remove('active-phase');
+      document.getElementById(modId).classList.remove('active-phase');
+      document.getElementById(steepId).classList.remove('active-phase');
+      if (tilt < 9) document.getElementById(lowId).classList.add('active-phase');
+      else if (tilt < 19) document.getElementById(modId).classList.add('active-phase');
+      else document.getElementById(steepId).classList.add('active-phase');
+    }
 
-function updateSparklines() {
-  setText('spark-temp-live', histTemp.length ? histTemp[histTemp.length-1].toFixed(1) + ' °C' : '—');
-  setText('spark-lux-live',  histLux.length  ? histLux[histLux.length-1].toFixed(0) + ' lux' : '—');
+    function updateGauge(angle) {
+      // Arc: 0° → offset=283, 90° → offset=0
+      const clamp = Math.max(0, Math.min(90, angle));
+      const offset = 283 * (1 - clamp / 90);
+      document.getElementById('gauge-arc').style.strokeDashoffset = offset;
 
-  drawSparkline('spark-power', histPower, '#F5A623', '#FF6B35');
-  drawSparkline('spark-eta',   histEta,   '#4ade80', '#22c55e');
-  drawSparkline('spark-temp',  histTemp,  '#FF6B35', '#f87171');
-  drawSparkline('spark-lux',   histLux,   '#F5A623', '#FDE68A');
-}
+      // Needle rotation: at 0° needle points straight up (rotate 0)
+      // arc goes from left (0°) to right (90°) → needle sweeps -90° to +90° from vertical
+      const rot = (clamp / 90) * 180 - 90;
+      document.getElementById('gauge-needle').setAttribute('transform', `rotate(${rot} 110 105)`);
 
-// ═══════════════════════════════════════════
-//   DATA LOG
-// ═══════════════════════════════════════════
-function appendLog(ts, voltage, current, power, lux, temp, tilt, pcorr, eta) {
-  const body = document.getElementById('log-body');
-  // Clear placeholder
-  if (body.children[0] && body.children[0].style.color === 'var(--dimmer)' && body.children.length === 1) {
-    body.innerHTML = '';
-  }
-  const t = ts ? ts.toLocaleTimeString('en-IN') : '--:--:--';
-  const line = document.createElement('div');
-  line.className = 'log-line';
-  line.innerHTML = `
+      document.getElementById('gauge-label').textContent = angle.toFixed(1) + '°';
+    }
+
+    function updateTiltStats() {
+      setText('tilt-min', tiltMin === Infinity ? '—' : tiltMin.toFixed(1));
+      setText('tilt-max', tiltMax === -Infinity ? '—' : tiltMax.toFixed(1));
+      setText('tilt-avg', tiltCount ? (tiltSum / tiltCount).toFixed(1) : '—');
+    }
+
+    // ═══════════════════════════════════════════
+    //   SPARKLINES (canvas)
+    // ═══════════════════════════════════════════
+    function drawSparkline(canvasId, data, color1, color2) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width) return;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      const w = rect.width, h = rect.height;
+
+      if (data.length < 2) return;
+
+      const min = Math.min(...data);
+      const max = Math.max(...data);
+      const range = max - min || 1;
+
+      const gradient = ctx.createLinearGradient(0, 0, w, 0);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+
+      // Fill gradient beneath line
+      const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+      fillGrad.addColorStop(0, color1 + '33');
+      fillGrad.addColorStop(1, color1 + '00');
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw fill
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = (i / (MAX_POINTS - 1)) * w;
+        const y = h - ((v - min) / range) * (h - 8) - 4;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.lineTo(w, h); ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = fillGrad;
+      ctx.fill();
+
+      // Draw line
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = (i / (MAX_POINTS - 1)) * w;
+        const y = h - ((v - min) / range) * (h - 8) - 4;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      // Latest dot
+      const lastX = w;
+      const lastY = h - ((data[data.length - 1] - min) / range) * (h - 8) - 4;
+      ctx.beginPath();
+      ctx.arc(lastX - 2, lastY, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = color2;
+      ctx.fill();
+    }
+
+    function updateSparklines() {
+      setText('spark-temp-live', histTemp.length ? histTemp[histTemp.length - 1].toFixed(1) + ' °C' : '—');
+      setText('spark-lux-live', histLux.length ? histLux[histLux.length - 1].toFixed(0) + ' lux' : '—');
+
+      drawSparkline('spark-power', histPower, '#F5A623', '#FF6B35');
+      drawSparkline('spark-eta', histEta, '#4ade80', '#22c55e');
+      drawSparkline('spark-temp', histTemp, '#FF6B35', '#f87171');
+      drawSparkline('spark-lux', histLux, '#F5A623', '#FDE68A');
+    }
+
+    // ═══════════════════════════════════════════
+    //   DATA LOG
+    // ═══════════════════════════════════════════
+    function appendLog(ts, voltage, current, power, lux, temp, tilt, pcorr, eta) {
+      const body = document.getElementById('log-body');
+      // Clear placeholder
+      if (body.children[0] && body.children[0].style.color === 'var(--dimmer)' && body.children.length === 1) {
+        body.innerHTML = '';
+      }
+      const t = ts ? ts.toLocaleTimeString('en-IN') : '--:--:--';
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `
     <span class="log-ts">${t}</span>
-    <span class="log-key">V:${typeof voltage === 'number' ? voltage.toFixed(2)+'V' : voltage}</span>
-    <span class="log-val">I:${typeof current === 'number' ? current.toFixed(1)+'mA' : current} &nbsp; P_raw:${typeof power === 'number' ? power.toFixed(1)+'mW' : power} &nbsp; P_corr:${typeof pcorr === 'number' ? pcorr.toFixed(2)+'mW' : pcorr} &nbsp; η:${typeof eta === 'number' ? eta.toFixed(4) : eta} &nbsp; Lux:${typeof lux === 'number' ? lux.toFixed(0) : lux} &nbsp; T:${typeof temp === 'number' ? temp.toFixed(1)+'°C' : temp} &nbsp; θ:${typeof tilt === 'number' ? tilt.toFixed(1)+'°' : tilt}</span>
+    <span class="log-key">V:${typeof voltage === 'number' ? voltage.toFixed(2) + 'V' : voltage}</span>
+    <span class="log-val">I:${typeof current === 'number' ? current.toFixed(1) + 'mA' : current} &nbsp; P_raw:${typeof power === 'number' ? power.toFixed(1) + 'mW' : power} &nbsp; P_corr:${typeof pcorr === 'number' ? pcorr.toFixed(2) + 'mW' : pcorr} &nbsp; η:${typeof eta === 'number' ? eta.toFixed(4) : eta} &nbsp; Lux:${typeof lux === 'number' ? lux.toFixed(0) : lux} &nbsp; T:${typeof temp === 'number' ? temp.toFixed(1) + '°C' : temp} &nbsp; θ:${typeof tilt === 'number' ? tilt.toFixed(1) + '°' : tilt}</span>
   `;
-  body.insertBefore(line, body.firstChild);
-  // Keep 200 lines
-  while (body.children.length > 200) body.removeChild(body.lastChild);
-}
+      body.insertBefore(line, body.firstChild);
+      // Keep 200 lines
+      while (body.children.length > 200) body.removeChild(body.lastChild);
+    }
 
-function clearLog() {
-  document.getElementById('log-body').innerHTML =
-    '<div style="color:var(--dimmer); padding-top:4px; font-size:11px;">Log cleared.</div>';
-}
+    function clearLog() {
+      document.getElementById('log-body').innerHTML =
+        '<div style="color:var(--dimmer); padding-top:4px; font-size:11px;">Log cleared.</div>';
+    }
 
-// ═══════════════════════════════════════════
-//   CSV EXPORT
-// ═══════════════════════════════════════════
-function exportCSV() {
-  if (!dataLog.length) { alert('No data to export yet.'); return; }
-  const header = 'Timestamp,Voltage_V,Current_mA,Power_mW,P_corrected_mW,Lux,Temp_C,Tilt_deg,Eta_rel';
-  const rows = dataLog.map(d =>
-    `${d.ts.toISOString()},${d.voltage.toFixed(3)},${d.current.toFixed(2)},${d.power.toFixed(3)},${d.pcorr.toFixed(4)},${d.lux.toFixed(1)},${d.temp.toFixed(2)},${d.tilt.toFixed(2)},${d.eta.toFixed(6)}`
-  );
-  const blob = new Blob([header + '\n' + rows.join('\n')], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `solar_data_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.csv`;
-  a.click();
-}
+    // ═══════════════════════════════════════════
+    //   CSV EXPORT
+    // ═══════════════════════════════════════════
+    function exportCSV() {
+      if (!dataLog.length) { alert('No data to export yet.'); return; }
+      const header = 'Timestamp,Voltage_V,Current_mA,Power_mW,P_corrected_mW,Lux,Temp_C,Tilt_deg,Eta_rel';
+      const rows = dataLog.map(d =>
+        `${d.ts.toISOString()},${d.voltage.toFixed(3)},${d.current.toFixed(2)},${d.power.toFixed(3)},${d.pcorr.toFixed(4)},${d.lux.toFixed(1)},${d.temp.toFixed(2)},${d.tilt.toFixed(2)},${d.eta.toFixed(6)}`
+      );
+      const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `solar_data_${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.csv`;
+      a.click();
+    }
 
-// ═══════════════════════════════════════════
-//   STATUS PILL
-// ═══════════════════════════════════════════
-function setStatus(type, msg) {
-  const pill = document.getElementById('status-pill');
-  pill.className = type;
-  document.getElementById('status-text').textContent = msg;
-}
+    // ═══════════════════════════════════════════
+    //   STATUS PILL
+    // ═══════════════════════════════════════════
+    function setStatus(type, msg) {
+      const pill = document.getElementById('status-pill');
+      pill.className = type;
+      document.getElementById('status-text').textContent = msg;
+    }
 
-// ═══════════════════════════════════════════
-//   DEMO MODE
-// ═══════════════════════════════════════════
-function toggleDemo() {
-  demoMode = !demoMode;
-  const sw = document.getElementById('demo-switch');
-  sw.classList.toggle('on', demoMode);
+    // ═══════════════════════════════════════════
+    //   DEMO MODE
+    // ═══════════════════════════════════════════
+    function toggleDemo() {
+      demoMode = !demoMode;
+      const sw = document.getElementById('demo-switch');
+      sw.classList.toggle('on', demoMode);
 
-  if (demoMode) {
-    setStatus('demo', 'Demo Mode');
-    appendLog(null, '🎭', 'DEMO', 'Simulated data active');
-    runDemo();
-  } else {
-    clearInterval(demoTimer);
-    setStatus('disconnected', 'Disconnected');
-  }
-}
+      if (demoMode) {
+        // Turning demo ON: disconnect any live WS first
+        if (ws) { ws.close(); ws = null; }
+        setStatus('demo', 'Demo Mode');
+        appendLog(null, '🎭', 'DEMO', 'Simulated data active');
+        runDemo();
+      } else {
+        // Turning demo OFF: stop demo and auto-try live connection
+        clearInterval(demoTimer);
+        appendLog(null, '🔌', 'Live', 'Demo stopped — attempting live WebSocket connection…');
+        connectWS();
+      }
+    }
 
-// Simulated solar day profile
-let demoTick = 0;
-function runDemo() {
-  demoTimer = setInterval(() => {
-    if (!demoMode) { clearInterval(demoTimer); return; }
-    demoTick++;
+    // Simulated solar day profile
+    let demoTick = 0;
+    function runDemo() {
+      demoTimer = setInterval(() => {
+        if (!demoMode) { clearInterval(demoTimer); return; }
+        demoTick++;
 
-    // Sun angle: rises & falls over "day"
-    const t = (demoTick % 120) / 120;  // 0→1 over 120 seconds
-    const sunElev = Math.sin(Math.PI * t);  // 0→1→0
+        // Sun angle: rises & falls over "day"
+        const t = (demoTick % 120) / 120;  // 0→1 over 120 seconds
+        const sunElev = Math.sin(Math.PI * t);  // 0→1→0
 
-    // Simulate tilt angle (slowly changing)
-    const tiltAngles = [5, 13, 25];
-    const tilt = tiltAngles[Math.floor(demoTick / 40) % 3] + (Math.random() - 0.5) * 0.3;
+        // Simulate tilt angle (slowly changing)
+        const tiltAngles = [5, 13, 25];
+        const tilt = tiltAngles[Math.floor(demoTick / 40) % 3] + (Math.random() - 0.5) * 0.3;
 
-    const lux  = Math.max(10, 45000 * sunElev + (Math.random() - 0.5) * 2000);
-    const voltage = 4.5 + 2.5 * sunElev + (Math.random() - 0.5) * 0.1;
-    const current = 80 * sunElev + (Math.random() - 0.5) * 5;
-    const power  = voltage * (current / 1000) * 1000; // mW
-    const temp   = 25 + 20 * sunElev + (Math.random() - 0.5) * 1.5;
+        const lux = Math.max(10, 45000 * sunElev + (Math.random() - 0.5) * 2000);
+        const voltage = 4.5 + 2.5 * sunElev + (Math.random() - 0.5) * 0.1;
+        const current = 80 * sunElev + (Math.random() - 0.5) * 5;
+        const power = voltage * (current / 1000) * 1000; // mW
+        const temp = 25 + 20 * sunElev + (Math.random() - 0.5) * 1.5;
 
-    ingestPacket({ voltage, current, power, lux, temp, tilt });
-  }, DEMO_INTERVAL);
-}
+        ingestPacket({ voltage, current, power, lux, temp, tilt });
+      }, DEMO_INTERVAL);
+    }
 
-// ═══════════════════════════════════════════
-//   HELPERS
-// ═══════════════════════════════════════════
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
-}
+    // ═══════════════════════════════════════════
+    //   HELPERS
+    // ═══════════════════════════════════════════
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
 
-// Redraw sparklines on resize
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(updateSparklines, 100);
-});
+    // Redraw sparklines on resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(updateSparklines, 100);
+    });
 
-// Auto-start demo mode on load so user sees the dashboard alive
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    demoMode = true;
-    document.getElementById('demo-switch').classList.add('on');
-    setStatus('demo', 'Demo Mode');
-    runDemo();
-  }, 600);
-});
-</script>
+    // On load: try live WebSocket first, fall back to Demo Mode after 2 s
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const url = document.getElementById('ws-url').value.trim();
+        setStatus('demo', '⏳ Connecting to logger…');
+        appendLog(null, '⏳', 'Init', 'Trying to connect to solar_logger.py at ' + url);
+
+        const testWs = new WebSocket(url);
+        let connected = false;
+
+        testWs.onopen = () => {
+          connected = true;
+          // Hand off to the real connectWS flow
+          testWs.close();
+          connectWS();
+        };
+
+        testWs.onerror = () => {
+          if (!connected) {
+            // Logger not running — start demo so dashboard looks alive
+            demoMode = true;
+            document.getElementById('demo-switch').classList.add('on');
+            setStatus('demo', 'Demo Mode');
+            appendLog(null, '🎭', 'DEMO', 'Logger not detected — showing simulated data. Run solar_logger.py to go live.');
+            runDemo();
+          }
+        };
+
+        // Fallback timeout: if WS hangs in CONNECTING state for >2 s, go to demo
+        setTimeout(() => {
+          if (!connected && testWs.readyState !== WebSocket.OPEN) {
+            testWs.close();
+            if (!demoMode) {
+              demoMode = true;
+              document.getElementById('demo-switch').classList.add('on');
+              setStatus('demo', 'Demo Mode');
+              appendLog(null, '🎭', 'DEMO', 'Logger not detected — showing simulated data.');
+              runDemo();
+            }
+          }
+        }, 2000);
+      }, 600);
+    });
+  </script>
 </body>
+
 </html>
