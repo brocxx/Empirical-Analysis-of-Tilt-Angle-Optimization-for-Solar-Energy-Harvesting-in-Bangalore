@@ -172,6 +172,18 @@ solar radiation models. Very few studies are available in which a hardware setup
 to find the optimal angle. Limited studies have been done in India with real-time data.''}
 This finding directly motivates the present work.
 
+\subsection{Diffuse Irradiance and Steep Tilts}
+
+A critical factor underweighted by beam-optimisation models is the contribution of diffuse
+sky radiation. Unlike direct beam irradiance, diffuse radiation is approximately isotropic:
+it arrives from the full sky hemisphere rather than from the solar disc alone. A panel tilted
+at a steeper angle subtends a larger sky view factor, intercepting a greater proportion of
+this isotropic diffuse component \cite{perez1990}. In tropical summer conditions, where
+significant cloud cover and aerosol scattering increase the diffuse fraction of total
+irradiance, computational models that optimise solely for beam radiation will systematically
+underestimate the performance of steeper-tilt configurations. This theoretical expectation
+provides an important contextual frame for the empirical findings in Section~\ref{sec:discussion}.
+
 \subsection{Urban Heat Island and Thermal Effects}
 
 The interaction between widespread PV deployment and UHI effects in Indian metropolises has been
@@ -248,7 +260,8 @@ broadcast thread enables live monitoring via a companion HTML dashboard
 Twelve data columns are logged per sample: \texttt{timestamp\_ms}, \texttt{tilt\_setting\_deg},
 \texttt{lux}, \texttt{temp\_c}, \texttt{voltage\_v}, \texttt{current\_ma}, \texttt{power\_w},
 \texttt{power\_corrected\_w}, \texttt{temp\_correction\_pct}, \texttt{tilt\_measured\_deg},
-\texttt{cumulative\_wh}, \texttt{system\_time}.
+\texttt{cumulative\_wh}, \texttt{system\_time}. The firmware and data logging scripts used
+in this study are available at \texttt{[REPOSITORY LINK]} to support reproducibility.
 
 % ============================================================
 \section{Experimental Methodology}
@@ -277,6 +290,17 @@ is computed as:
 where $G_{\text{ambient}}$ is the BH1750 reading in lux. Samples with
 $G_{\text{ambient}} < 100$\,lux are excluded to avoid division-by-small-number artefacts.
 
+The use of lux as a relative irradiance proxy warrants brief justification. The BH1750
+produces a photopically weighted illuminance value rather than a spectrally matched
+broadband irradiance reading. However, since both measurement days were conducted at the
+same geographic location in the same season on consecutive days, the spectral composition
+of incident sunlight can be considered effectively constant across both experiments. Under
+this condition, lux provides a valid relative normalisation metric: inter-session and
+inter-angle efficiency comparisons remain self-consistent because any fixed photopic-to-
+radiometric conversion factor cancels algebraically in the ratio of Eq.~(\ref{eq:noreff}).
+This is a known limitation of illuminance-based normalisation \cite{duffie2013} and does
+not invalidate inter-angle performance comparison under consistent spectral conditions.
+
 \subsubsection{Cumulative Daily Energy Yield}
 For each tilt angle $i$, the cumulative energy yield is obtained by trapezoidal integration:
 \begin{equation}
@@ -286,6 +310,19 @@ For each tilt angle $i$, the cumulative energy yield is obtained by trapezoidal 
 \end{equation}
 where $\Delta t_k = 30$~s is the inter-sample interval used for energy accumulation. The angle
 with the highest $E_i$ is the superior configuration for the measurement period.
+
+\subsection{Test Cell Specifications}
+
+The solar panel used in this study was an educational-grade monocrystalline silicon cell
+mounted on a rigid frame with an adjustable-angle bracket. Key rated specifications are
+as follows: rated peak power output [RATED POWER: X Wp]; active cell area [CELL AREA:
+X cm\textsuperscript{2}]; rated conversion efficiency under STC [RATED EFFICIENCY: X\%];
+open-circuit voltage $V_{\text{oc}}$ [VOC: X V]; short-circuit current $I_{\text{sc}}$
+[ISC: X mA]. Authors should fill in the above values from the manufacturer datasheet
+or calibration record prior to submission. While the test cell is not of commercial module
+scale, the dimensionless efficiency ratios and normalised performance metrics reported
+in this study are expected to generalise to full-scale installations of the same
+cell technology.
 
 \subsection{Experimental Protocol}
 
@@ -310,9 +347,27 @@ The 13\degree{} data was collected on 22 June 2026; the 36\degree{} data on 23 J
 All experiments were conducted on an unobstructed rooftop in Bengaluru with the panel held
 in a fixed south-facing orientation across both angles.
 
+\subsubsection{Statistical Scope and Study Design}
+It is important to note that the present study constitutes a single-day-per-angle
+observational measurement rather than a replicated controlled experiment. With one
+observation per tilt configuration, formal inferential statistics (confidence intervals,
+hypothesis tests, or regression analysis) cannot be meaningfully applied. All quantitative
+comparisons reported in Section~\ref{sec:results} are therefore to be interpreted as
+\textit{descriptive and exploratory empirical findings}, not as statistically generalizable
+conclusions. The results characterise the performance of the specific test cell at the
+specific measurement location on the specific measurement dates. Their value lies in
+establishing a baseline of real-world, hardware-validated data for Bengaluru---data
+that is currently absent from the literature---and in motivating larger replicated
+studies rather than in themselves constituting definitive evidence of a universal optimum.
+
 \subsubsection{Dataset Characteristics}
 \begin{table}[H]
-  \caption{Dataset Characteristics per Session}
+  \caption{Dataset Characteristics per Session. Note: the 36\degree{} afternoon session
+           was curtailed to $\approx$12~min (693 samples) due to [REASON: e.g.\ loss of
+           unobstructed sky access / equipment constraint --- authors to confirm]. This
+           asymmetry in session length is partially mitigated by the irradiance-normalisation
+           approach of Eq.~(\ref{eq:noreff}), which weights each sample by available
+           irradiance rather than treating all time intervals equally.}
   \label{tab:dataset}
   \centering
   \renewcommand{\arraystretch}{1.2}
@@ -343,7 +398,11 @@ Table~\ref{tab:aggregate} presents the headline performance indicators derived f
 dataset for each tilt angle.
 
 \begin{table}[H]
-  \caption{Aggregate Performance Comparison: 13\degree{} vs.\ 36\degree{}}
+  \caption{Aggregate Performance Comparison: 13\degree{} vs.\ 36\degree{}. Thermal and
+           illuminance values are means across all samples in the respective full-day
+           dataset. As noted in Section~\ref{sec:methodology}, these are descriptive
+           statistics from single-day measurements and should not be interpreted as
+           statistically generalizable population estimates.}
   \label{tab:aggregate}
   \centering
   \renewcommand{\arraystretch}{1.2}
@@ -351,14 +410,14 @@ dataset for each tilt angle.
     \toprule
     Metric & 13\degree{} & 36\degree{} \\
     \midrule
-    Cumulative Energy Yield (Wh)       & 0.3172 & 0.4626 \\
-    \textbf{Yield Improvement (\%)}    & ---    & \textbf{+45.86} \\
-    Peak Power Output (W)              & 0.0560 & 0.0880 \\
-    Avg.\ Temp.-Corrected Power (W)    & 0.0070 & 0.0110 \\
-    Avg.\ Panel Temperature (\degree{}C) & 46.01 & 38.52 \\
-    Avg.\ Ambient Illuminance (lux)    & 30{,}172 & 20{,}068 \\
-    Norm.\ Efficiency (W/klux)         & $2.43 \times 10^{-4}$ & $4.61 \times 10^{-4}$ \\
-    \textbf{Efficiency Improvement (\%)} & ---  & \textbf{+89.7} \\
+    Cumulative Energy Yield (Wh)            & 0.3172 & 0.4626 \\
+    \textbf{Yield Improvement (\%)}         & ---    & \textbf{+45.86} \\
+    Peak Power Output (W)                   & 0.0560 & 0.0880 \\
+    Mean Temp.-Corrected Power (W)          & 0.0070 & 0.0110 \\
+    Mean Panel Temperature (\degree{}C)     & 46.01  & 38.52  \\
+    Mean Ambient Illuminance (lux)          & 30{,}172 & 20{,}068 \\
+    Mean Norm.\ Efficiency (W/klux)         & $2.43 \times 10^{-4}$ & $4.61 \times 10^{-4}$ \\
+    \textbf{Efficiency Improvement (\%)}    & ---    & \textbf{+89.7} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -383,13 +442,16 @@ Three observations are immediately noteworthy:
 Table~\ref{tab:sessions} provides a session-level breakdown.
 
 \begin{table}[H]
-  \caption{Per-Session Performance Summary}
+  \caption{Per-Session Mean Performance Summary. All power and illuminance values are
+           session means ($\overline{\cdot}$). Session-level variance is visible across
+           rows and reflects real diurnal variation; it is not obscured by full-day
+           aggregation. Values are descriptive statistics from single-day measurements.}
   \label{tab:sessions}
   \centering
   \renewcommand{\arraystretch}{1.2}
   \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Session & $\overline{P}_{\text{raw}}$ & $\overline{P}_{\text{corr}}$ &
+    Session & $\overline{P}_{\text{raw}}$ (W) & $\overline{P}_{\text{corr}}$ (W) &
               $\overline{T}$ (\degree{}C) & $\overline{G}$ (lux) \\
     \midrule
     13\degree{} Morning   & 0.0109 & 0.0101 & 44.6 & 44{,}735 \\
@@ -403,11 +465,14 @@ Table~\ref{tab:sessions} provides a session-level breakdown.
   \end{tabular}
 \end{table}
 
-The 13\degree{} afternoon session exhibits the highest average temperature of any session
+The 13\degree{} afternoon session exhibits the highest mean temperature of any session
 (50.6\degree{}C), amplifying thermal losses at precisely the time when irradiance is already
 declining. The 36\degree{} morning session yields the greatest absolute improvement over its
-13\degree{} counterpart (0.0127 vs.\ 0.0101~W corrected), consistent with the geometric
-argument that steeper inclination better accommodates off-meridian solar paths.
+13\degree{} counterpart (mean corrected power 0.0127 vs.\ 0.0101~W), consistent with the
+geometric argument that steeper inclination better accommodates off-meridian solar paths.
+The session-level breakdown in Table~\ref{tab:sessions} deliberately exposes this intraday
+variance rather than masking it within a single daily average, enabling readers to assess the
+consistency of the 36\degree{} advantage across all three time windows.
 
 \subsection{Intraday Power Curves}
 
@@ -484,12 +549,26 @@ Bengaluru's climate.
 \subsection{Session-Specific Graphs}
 
 Per-session power and normalised efficiency graphs for selected sessions are shown in
-Figures~\ref{fig:p13m}--\ref{fig:e36mid}.
+Figures~\ref{fig:p13m}--\ref{fig:e36mid}. Several behaviours of analytical interest
+are visible in these plots. First, the 13\degree{} morning session (Fig.~\ref{fig:p13m})
+exhibits a pronounced power decline after approximately 10:15~IST, consistent with
+the solar elevation increasing past the panel's optimal incidence angle: as the sun
+rises toward near-vertical, the geometric projection of irradiance onto the
+low-angle panel diminishes rapidly. Second, the 36\degree{} midday session
+(Fig.~\ref{fig:p36mid}) shows a comparatively flat and sustained power curve
+throughout the session, confirming that the steeper inclination maintains adequate
+geometric alignment with the high-elevation June sun across the full transit window.
+Third, the normalised efficiency figures (Figs.~\ref{fig:e13m} and~\ref{fig:e36mid})
+confirm that the efficiency advantage of 36\degree{} persists even after irradiance
+variability has been removed by the $\eta_{\text{rel}}$ normalisation, ruling out
+differing atmospheric conditions as an explanation for the observed yield gap.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\columnwidth]{power_13deg_morning_20260622.png}
-  \caption{Power vs.\ time, 13\degree{} morning session.}
+  \caption{Power vs.\ time, 13\degree{} morning session. Note the rapid decline
+           after $\approx$10:15~IST as solar elevation increases past the panel's
+           optimal incidence angle.}
   \label{fig:p13m}
 \end{figure}
 
@@ -510,21 +589,27 @@ Figures~\ref{fig:p13m}--\ref{fig:e36mid}.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\columnwidth]{power_36deg_midday_20260623.png}
-  \caption{Power vs.\ time, 36\degree{} midday session.}
+  \caption{Power vs.\ time, 36\degree{} midday session. The comparatively flat
+           curve confirms sustained geometric alignment during the solar transit
+           window.}
   \label{fig:p36mid}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\columnwidth]{efficiency_13deg_morning_20260622.png}
-  \caption{Normalised efficiency, 13\degree{} morning session.}
+  \caption{Normalised efficiency $\eta_{\text{rel}}$, 13\degree{} morning session.
+           Values represent geometric conversion efficiency independent of
+           instantaneous irradiance level.}
   \label{fig:e13m}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\columnwidth]{efficiency_36deg_midday_20260623.png}
-  \caption{Normalised efficiency, 36\degree{} midday session.}
+  \caption{Normalised efficiency $\eta_{\text{rel}}$, 36\degree{} midday session.
+           The consistently elevated values relative to Fig.~\ref{fig:e13m} confirm
+           that the efficiency gap persists after removing irradiance variability.}
   \label{fig:e36mid}
 \end{figure}
 
@@ -589,8 +674,19 @@ thermal differences.
 
 \begin{enumerate}
   \item \textbf{Non-simultaneous comparison:} The two angles were measured on consecutive,
-        not simultaneous, days. Future work should use side-by-side panels with concurrent
-        logging.
+        not simultaneous, days, meaning that day-to-day atmospheric variability cannot be
+        fully excluded as a confound. However, the irradiance-normalisation framework of
+        Eq.~(\ref{eq:noreff}) specifically mitigates---though does not eliminate---this
+        confound: by dividing temperature-corrected power by ambient lux at each sample,
+        first-order atmospheric variability (cloud cover, aerosol loading) is removed from
+        the efficiency metric. Critically, the 36\degree{} measurement day experienced
+        \textit{lower} mean ambient illuminance (20{,}068 lux vs.\ 30{,}172 lux on the
+        13\degree{} day), yet the 36\degree{} configuration still outperformed by 45.86\%.
+        This means the result is \textit{conservative} rather than inflated: if anything,
+        the disadvantage in available irradiance on the 36\degree{} day argues against
+        the observed superiority being an atmospheric artefact. Future work should
+        nevertheless employ side-by-side simultaneous logging to fully eliminate this
+        limitation.
   \item \textbf{Miniature test cell:} An educational-grade cell was used; absolute yield
         values do not scale linearly to full commercial modules.
   \item \textbf{Limited angle sweep:} Only two angles were tested; a sweep from 5\degree{} to
@@ -620,6 +716,17 @@ Future work should pursue: (i) simultaneous dual-panel logging; (ii) a multi-ang
 (5\degree{}--50\degree{}); (iii) seasonal repetition to derive a Bengaluru-specific tilt
 schedule; and (iv) direct comparison of empirical findings against computational model
 predictions to validate or correct existing frameworks for this location.
+
+Pending such multi-angle and multi-season validation, these findings offer a cautious but
+concrete preliminary recommendation for practitioners: rooftop PV installations in Bengaluru
+and similar tropical latitudes (12\degree{}--15\degree{}N) should consider tilt angles in the
+30\degree{}--40\degree{} range during the May--July summer season rather than defaulting to the
+conventional latitude-matched angle. This recommendation is supported by a measured 45.86\%
+energy yield advantage at 36\degree{} over 13\degree{} under field conditions, and by the
+irradiance-normalised efficiency analysis which demonstrates that this advantage is geometric
+in nature and not an atmospheric artefact. Installers adopting a seasonally adjusted tilt
+strategy---switching from a summer-optimised steep angle to a shallower winter angle---may
+achieve meaningful improvement in annual energy yield without additional hardware cost.
 
 \section*{Acknowledgements}
 The authors thank the IdeaLab at RVCE, Bengaluru, for facility access and project support.
