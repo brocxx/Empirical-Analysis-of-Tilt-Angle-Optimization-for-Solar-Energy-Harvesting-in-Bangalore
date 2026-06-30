@@ -85,23 +85,26 @@ ishanmahajan.cs25@rvce.edu.in
 \begin{abstract}
 Fixed-tilt photovoltaic (PV) installations in Indian urban environments rely predominantly on
 rule-of-thumb or computationally derived tilt-angle recommendations that are rarely validated
-by field measurement in tropical cities. This paper presents an empirical investigation of solar
-panel energy yield at two discrete tilt angles---13\degree{} (latitude-matched) and 36\degree{}
-(seasonally steep)---conducted across full solar days in Bengaluru, India (lat.~12.97\degree{}N,
-long.~77.57\degree{}E). A multi-sensor data acquisition system comprising an INA219 power monitor,
-BH1750 ambient light sensor, DS18B20 surface temperature sensor, and MPU-6050 inertial
-measurement unit was deployed to record voltage, current, irradiance, panel temperature, and
-measured inclination at one-second intervals. The dataset spans 10{,}061 one-second samples
-across six sessions (morning, midday, afternoon) for each tilt angle, collected on 22--23 June
-2026. Temperature-corrected power and irradiance-normalised efficiency metrics were derived in
-post-processing. Our results demonstrate that the 36\degree{} configuration produced a
-cumulative daily energy yield of 0.4626~Wh---a \textbf{45.86\%} improvement over the
-0.3172~Wh recorded at 13\degree{}---despite operating under lower average ambient irradiance
-(20{,}068 lux vs.\ 30{,}172 lux). The irradiance-normalised efficiency at 36\degree{} was
-89.7\% higher than at 13\degree{}, with average panel temperatures 7.49\degree{}C lower. These
-findings indicate that the conventional latitude-matched tilt angle is sub-optimal for
-Bengaluru's tropical summer geometry, and underscore the critical role of simultaneous thermal
-correction in accurate tilt performance assessment.
+by field measurement in tropical cities. This paper presents a preliminary empirical investigation
+of solar panel energy yield at two discrete tilt angles---13\degree{} (latitude-matched) and
+36\degree{} (seasonally steep)---conducted across full solar days in Bengaluru, India
+(lat.~12.97\degree{}N, long.~77.57\degree{}E). A multi-sensor data acquisition system comprising
+an INA219 power monitor, BH1750 ambient light sensor, DS18B20 surface temperature sensor, and
+MPU-6050 inertial measurement unit was deployed to record voltage, current, irradiance, panel
+temperature, and measured inclination at one-second intervals. The dataset spans 10{,}061
+one-second samples across six sessions (morning, midday, afternoon) for each tilt angle,
+collected on 22--23 June 2026. Temperature-corrected power and irradiance-normalised efficiency
+metrics were derived in post-processing. In this single-day-per-angle pilot measurement, the
+36\degree{} configuration produced a cumulative daily energy yield of 0.4626~Wh---a
+\textbf{45.86\%} improvement over the 0.3172~Wh recorded at 13\degree{}---despite operating
+under lower average ambient irradiance (20{,}068 lux vs.\ 30{,}172 lux). The irradiance-normalised
+efficiency at 36\degree{} was 89.7\% higher than at 13\degree{}, with average panel temperatures
+7.49\degree{}C lower. These results are a preliminary empirical observation from a
+single-day-per-angle measurement, consistent with the expectation that steeper tilts may better
+capture diffuse sky radiation under tropical summer conditions, and motivating---but not yet
+establishing---a general tilt-angle recommendation for Bengaluru. The findings also underscore
+the value of simultaneous thermal correction in tilt performance assessment, and motivate
+larger replicated studies with simultaneous multi-angle logging.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -142,11 +145,13 @@ This paper addresses that gap with four specific contributions:
   \item A purpose-built, multi-sensor hardware acquisition system validated for continuous
         outdoor deployment;
   \item An empirically collected dataset of 10{,}061 one-second-interval samples across two
-        tilt angles and three daily time windows;
+        tilt angles and three daily time windows, constituting a hypothesis-generating pilot
+        study rather than a replicated controlled experiment;
   \item A thermal derating correction methodology applied in post-processing to isolate
         geometric efficiency from heat-induced losses;
-  \item Irradiance-normalised efficiency curves that decouple panel performance from
-        cloud-cover variability, enabling fair inter-angle comparison.
+  \item Irradiance-normalised efficiency curves that partially decouple panel performance from
+        overall irradiance level, enabling a preliminary inter-angle comparison under the
+        specific sky conditions observed on these two measurement days.
 \end{enumerate}
 
 % ============================================================
@@ -367,7 +372,12 @@ studies rather than in themselves constituting definitive evidence of a universa
            unobstructed sky access / equipment constraint --- authors to confirm]. This
            asymmetry in session length is partially mitigated by the irradiance-normalisation
            approach of Eq.~(\ref{eq:noreff}), which weights each sample by available
-           irradiance rather than treating all time intervals equally.}
+           irradiance rather than treating all time intervals equally. However, because the
+           cumulative energy totals in Table~\ref{tab:aggregate} use direct time-integration
+           per Eq.~(\ref{eq:energy}), those totals are sensitive to this session-length
+           asymmetry and should be read alongside the normalised efficiency results
+           (Table~\ref{tab:aggregate}, bottom rows) as a cross-check rather than
+           relied on in isolation.}
   \label{tab:dataset}
   \centering
   \renewcommand{\arraystretch}{1.2}
@@ -422,19 +432,25 @@ dataset for each tilt angle.
   \end{tabular}
 \end{table}
 
-Three observations are immediately noteworthy:
+Three observations are immediately noteworthy in this single-day-per-angle measurement:
 \begin{enumerate}
-  \item The 36\degree{} panel harvested \textbf{45.86\% more total energy} despite experiencing
-        \textit{lower} average irradiance (20{,}068 vs.\ 30{,}172~lux). This paradox resolves
-        under irradiance normalisation: at 36\degree{}, the panel converts available light
-        nearly twice as efficiently as at 13\degree{}.
+  \item Under the specific sky conditions observed on these two days, the 36\degree{} panel
+        harvested \textbf{45.86\% more total energy} despite experiencing \textit{lower}
+        average irradiance (20{,}068 vs.\ 30{,}172~lux). Under irradiance normalisation, the
+        36\degree{} configuration is consistent with converting available light nearly twice as
+        efficiently as the 13\degree{} configuration. Because the cumulative yield totals depend
+        on time-integration over unequal session lengths (see Table~\ref{tab:dataset}), these
+        totals should be read alongside the normalised efficiency figures as a cross-check.
   \item The average panel surface temperature at 36\degree{} was \textbf{7.49\degree{}C cooler}.
         Via Eq.~(\ref{eq:thermal}), this alone corresponds to a thermal efficiency gain of
         approximately $7.49 \times 0.45\% \approx 3.4\%$---non-trivial but insufficient to
-        explain the full 45.86\% gap; geometric alignment is the dominant factor.
+        account for the full 45.86\% gap on its own. As discussed in Section~\ref{sec:discussion},
+        the cooler temperature at 36\degree{} is consistent with multiple plausible contributors
+        and the single-day design cannot isolate which dominates.
   \item Peak power at 36\degree{} (88.0~mW) exceeded 13\degree{} peak (56.0~mW) by
-        \textbf{57.1\%}, confirming superior solar path intersection near the June solstice
-        for Bengaluru's latitude.
+        \textbf{57.1\%}, which is consistent with improved solar path intersection near the
+        June solstice for Bengaluru's latitude, though atmospheric differences between the
+        two measurement days may also contribute.
 \end{enumerate}
 
 \subsection{Per-Session Performance}
@@ -467,12 +483,13 @@ Table~\ref{tab:sessions} provides a session-level breakdown.
 
 The 13\degree{} afternoon session exhibits the highest mean temperature of any session
 (50.6\degree{}C), amplifying thermal losses at precisely the time when irradiance is already
-declining. The 36\degree{} morning session yields the greatest absolute improvement over its
-13\degree{} counterpart (mean corrected power 0.0127 vs.\ 0.0101~W), consistent with the
-geometric argument that steeper inclination better accommodates off-meridian solar paths.
+declining. The 36\degree{} morning session shows the greatest absolute difference from its
+13\degree{} counterpart (mean corrected power 0.0127 vs.\ 0.0101~W), which is consistent with
+the geometric argument that steeper inclination better accommodates off-meridian solar paths,
+though the different sky conditions on each measurement day may also contribute to this pattern.
 The session-level breakdown in Table~\ref{tab:sessions} deliberately exposes this intraday
 variance rather than masking it within a single daily average, enabling readers to assess the
-consistency of the 36\degree{} advantage across all three time windows.
+pattern of the 36\degree{} advantage across all three time windows.
 
 \subsection{Intraday Power Curves}
 
@@ -502,10 +519,12 @@ maintains closer alignment with the June sun's north-of-zenith arc at this latit
 \subsection{Normalised Efficiency Curves}
 
 Figures~\ref{fig:eff13} and~\ref{fig:eff36} show the irradiance-normalised efficiency
-$\eta_{\text{rel}}(t)$, which removes the confounding effect of cloud-cover variability.
-The 36\degree{} efficiency is consistently higher across all time windows, confirming that
-the energy advantage is geometric and not an artefact of differing atmospheric conditions
-between measurement days.
+$\eta_{\text{rel}}(t)$, which partially removes the confounding effect of overall irradiance
+level. The 36\degree{} efficiency is consistently higher across all time windows under the
+skies observed on these two measurement days. As discussed in Section~\ref{sec:discussion},
+however, this normalisation corrects for overall brightness but not for the spectral and
+angular composition of light (beam vs.\ diffuse fraction), and so cannot fully separate the
+tilt-angle effect from differences in sky conditions between the two days.
 
 \begin{figure}[H]
   \centering
@@ -525,12 +544,10 @@ between measurement days.
 
 Figures~\ref{fig:temp13} and~\ref{fig:temp36} present intraday surface temperature profiles.
 Panels at 13\degree{} exceeded those at 36\degree{} by 5--10\degree{}C throughout the day.
-Two physical mechanisms contribute: (a) the lower-inclination panel presents a larger horizontal
-projection, reducing convective airflow underneath; (b) the 36\degree{} panel's superior
-geometric alignment reduces the fraction of diffuse irradiance absorbed as waste heat on
-inactive cell surfaces. All panels operated substantially above the 25\degree{}C STC baseline
-(minimum recorded: 28.75\degree{}C), underscoring the relevance of thermal correction in
-Bengaluru's climate.
+As discussed in Section~\ref{sec:discussion}, multiple factors plausibly contribute to this
+difference and the single-day design cannot isolate which dominates. All panels operated
+substantially above the 25\degree{}C STC baseline (minimum recorded: 28.75\degree{}C),
+underscoring the relevance of thermal correction in Bengaluru's climate.
 
 \begin{figure}[H]
   \centering
@@ -556,12 +573,14 @@ the solar elevation increasing past the panel's optimal incidence angle: as the 
 rises toward near-vertical, the geometric projection of irradiance onto the
 low-angle panel diminishes rapidly. Second, the 36\degree{} midday session
 (Fig.~\ref{fig:p36mid}) shows a comparatively flat and sustained power curve
-throughout the session, confirming that the steeper inclination maintains adequate
-geometric alignment with the high-elevation June sun across the full transit window.
+throughout the session, suggesting that the steeper inclination maintains better
+geometric alignment with the high-elevation June sun across the transit window,
+though diffuse irradiance contributions on the second measurement day may also play a role.
 Third, the normalised efficiency figures (Figs.~\ref{fig:e13m} and~\ref{fig:e36mid})
-confirm that the efficiency advantage of 36\degree{} persists even after irradiance
-variability has been removed by the $\eta_{\text{rel}}$ normalisation, ruling out
-differing atmospheric conditions as an explanation for the observed yield gap.
+suggest that the efficiency advantage of 36\degree{} persists after correcting for
+overall irradiance level via $\eta_{\text{rel}}$; however, as noted in
+Section~\ref{sec:discussion}, this normalisation cannot fully account for differences
+in beam-to-diffuse ratio between the two measurement days.
 
 \begin{figure}[H]
   \centering
@@ -636,57 +655,78 @@ For $\beta = 13\degree{}$: $\theta = 2.57\degree{}$.
 For $\beta = 36\degree{}$: $\theta = 25.57\degree{}$.
 
 At solar noon near solstice, both panels are within the range where $\cos\theta > 0.9$, so
-the midday geometric advantage of 36\degree{} is modest. The larger benefit emerges in the
-morning and afternoon windows, where the steeper tilt maintains a more favourable angle of
-incidence as the sun departs the south meridian. This is consistent with
-Table~\ref{tab:sessions}: the greatest proportional difference in corrected power occurs in
-the morning sessions.
+the midday geometric advantage of 36\degree{} is modest. The larger benefit from beam
+geometry emerges in the morning and afternoon windows, where the steeper tilt maintains a
+more favourable angle of incidence as the sun departs the south meridian, which is compatible
+with the pattern in Table~\ref{tab:sessions} where the greatest proportional difference in
+corrected power is observed in the morning sessions. It should be noted, however, that this
+expectation of a modest midday geometric advantage is in tension with Table~\ref{tab:sessions},
+where the 36\degree{} midday session outperforms the 13\degree{} midday session by a margin
+considerably larger than pure beam geometry would predict. This discrepancy is further
+evidence that diffuse irradiance, differences in atmospheric conditions between the two
+measurement days, or both, are likely playing a larger role than geometric incidence angle
+alone---and the dataset as collected cannot distinguish between these explanations.
 
 \subsection{Thermal Contribution}
 
 The 7.49\degree{}C average temperature advantage at 36\degree{} translates to a systematic
 correction factor advantage of $\approx 7.49 \times 0.45\% \approx 3.4\%$. While non-trivial,
-this is insufficient to explain the full 45.86\% energy gap, confirming that geometric
-alignment is the dominant driver.
+this alone is insufficient to account for the full 45.86\% energy gap. The cooler operating
+temperature at 36\degree{} is plausibly attributable to multiple factors: lower absorbed
+irradiance on the second measurement day, and potentially better convective cooling at steeper
+tilt from the larger air gap beneath the panel. Both mechanisms are consistent with the data,
+but the single-day-per-angle design cannot isolate which is the dominant contributor, and
+claiming either as the primary driver would go beyond what the evidence supports.
 
 \subsection{Comparison with Computational Models}
 
 Taylor et al.\ \cite{taylor2022} predicted an optimal summer-season tilt of 11\degree{}--15\degree{}
-for sites near $\phi = 12\degree{}$, closer to our 13\degree{} configuration. Our field data
-show 36\degree{} outperforming 13\degree{} by 46\% near the June solstice. This discrepancy
-likely arises because computational models typically optimise for beam radiation under clear-sky
-assumptions, whereas field conditions include diffuse irradiance contributions. Diffuse radiation
-is isotropic and favours steeper tilts (larger sky view factor) more than beam-optimised
-models predict \cite{perez1990}. This underscores the value of empirical field data over purely
-computational approaches.
+for sites near $\phi = 12\degree{}$, closer to our 13\degree{} configuration. In this
+single-day-per-angle measurement, the 36\degree{} configuration outperformed 13\degree{} by
+46\% near the June solstice. This discrepancy is consistent with the hypothesis that
+computational models optimising for beam radiation under clear-sky assumptions
+systematically underestimate the performance of steeper-tilt configurations under field
+conditions, where diffuse irradiance---which is isotropic and favours larger sky view
+factors---constitutes a meaningful fraction of total irradiance \cite{perez1990}. However,
+the non-simultaneous measurement design means the observed gap cannot be unambiguously
+attributed to tilt geometry alone, as discussed in Section~\ref{sec:limitations}.
 
 \subsection{Urban Heat Island Implications}
 
 Average panel temperatures of 38--50\degree{}C---substantially above the 25\degree{}C STC
-baseline---are consistent with Bengaluru's UHI-elevated ambient temperatures in June
+baseline---are compatible with Bengaluru's UHI-elevated ambient temperatures in June
 ($\approx$30--34\degree{}C daytime). Without thermal correction, comparisons of raw power
 values would systematically obscure real performance differences, as the higher temperatures
-at 13\degree{} artificially suppress apparent output. Our framework isolates this thermal bias,
-ensuring the 46\% yield gap is a geometric finding rather than an artefact of measurement-day
-thermal differences.
+at 13\degree{} artificially suppress apparent output. The thermal correction framework applied
+here is therefore important for producing a fair preliminary comparison, even though the
+single-day design limits the strength of conclusions that can be drawn from it.
 
 \subsection{Limitations}
+\label{sec:limitations}
 
 \begin{enumerate}
-  \item \textbf{Non-simultaneous comparison:} The two angles were measured on consecutive,
-        not simultaneous, days, meaning that day-to-day atmospheric variability cannot be
-        fully excluded as a confound. However, the irradiance-normalisation framework of
-        Eq.~(\ref{eq:noreff}) specifically mitigates---though does not eliminate---this
-        confound: by dividing temperature-corrected power by ambient lux at each sample,
-        first-order atmospheric variability (cloud cover, aerosol loading) is removed from
-        the efficiency metric. Critically, the 36\degree{} measurement day experienced
-        \textit{lower} mean ambient illuminance (20{,}068 lux vs.\ 30{,}172 lux on the
-        13\degree{} day), yet the 36\degree{} configuration still outperformed by 45.86\%.
-        This means the result is \textit{conservative} rather than inflated: if anything,
-        the disadvantage in available irradiance on the 36\degree{} day argues against
-        the observed superiority being an atmospheric artefact. Future work should
-        nevertheless employ side-by-side simultaneous logging to fully eliminate this
-        limitation.
+  \item \textbf{Non-simultaneous comparison (central limitation):} The two angles were
+        measured on consecutive, not simultaneous, days. The irradiance-normalisation of
+        Eq.~(\ref{eq:noreff}) corrects for overall brightness (lux level) at each sample,
+        partially mitigating first-order atmospheric variability. However, this correction
+        cannot account for the \textit{spectral and angular composition} of incident
+        light---specifically, the ratio of direct beam to diffuse sky radiation. This
+        distinction is critical: the most plausible mechanism for the 36\degree{} advantage
+        identified in Section~\ref{sec:background} (and invoked in
+        Section~\ref{sec:discussion}) is enhanced capture of isotropic diffuse radiation at
+        steeper tilt. Yet diffuse fraction is precisely the quantity that differs between a
+        clearer day and a hazier or cloudier day. Because the two measurement days differed
+        in overall irradiance (20{,}068 lux vs.\ 30{,}172 lux), they may also have differed
+        in beam-to-diffuse ratio---and the BH1750 lux normalisation cannot separate these
+        effects. This means the normalisation cannot fully distinguish the tilt-angle effect
+        from the weather effect. While the 36\degree{} day's lower irradiance is in one
+        sense conservative (the configuration still outperformed), it does not rule out the
+        possibility that diffuse-rich sky conditions on that day contributed
+        disproportionately to the 36\degree{} panel's advantage. This is the central
+        limitation of the study and the primary reason the result should be read as a
+        hypothesis-generating finding rather than a settled conclusion. Future work should
+        employ side-by-side simultaneous logging of both angles under identical sky
+        conditions to fully disentangle geometric and atmospheric contributions.
   \item \textbf{Miniature test cell:} An educational-grade cell was used; absolute yield
         values do not scale linearly to full commercial modules.
   \item \textbf{Limited angle sweep:} Only two angles were tested; a sweep from 5\degree{} to
@@ -703,30 +743,35 @@ thermal differences.
 This paper has presented a hardware-validated, temperature-corrected comparison of fixed-tilt
 solar panel performance at 13\degree{} and 36\degree{} in Bengaluru, India (12.97\degree{}N),
 using a purpose-built multi-sensor data acquisition system. Across 10{,}061 one-second samples
-spanning full-day sessions in June 2026, the steeper 36\degree{} configuration outperformed
-the latitude-matched 13\degree{} setting by \textbf{45.86\%} in total cumulative energy yield,
-with a normalised efficiency advantage of \textbf{89.7\%} and an average panel temperature
-that was \textbf{7.49\degree{}C cooler}.
+spanning full-day sessions in June 2026, the 36\degree{} configuration outperformed the
+latitude-matched 13\degree{} setting by \textbf{45.86\%} in total cumulative energy yield
+under the specific sky conditions observed on these two measurement days, with a
+normalised efficiency advantage of \textbf{89.7\%} and an average panel temperature that
+was \textbf{7.49\degree{}C cooler}.
 
-These results challenge the common practice of specifying latitude-matched tilt for tropical
-Indian rooftop installations during the summer season, and validate the necessity of thermal
-correction when comparing PV configurations in high-ambient-temperature environments.
+As documented in Section~\ref{sec:limitations}, this is a single-day-per-angle pilot study,
+and the non-simultaneous measurement design means the observed advantage cannot be
+unambiguously attributed to tilt geometry alone: the irradiance-normalisation corrects for
+overall brightness but cannot separate the tilt-angle effect from differences in
+beam-to-diffuse ratio between the two measurement days. The results are therefore best
+understood as a hypothesis-generating finding---consistent with, but not yet establishing,
+the superiority of steeper tilts for Bengaluru's tropical summer conditions. The study
+also demonstrates the value of simultaneous thermal correction when comparing PV tilt
+configurations in high-ambient-temperature environments.
 
-Future work should pursue: (i) simultaneous dual-panel logging; (ii) a multi-angle sweep
-(5\degree{}--50\degree{}); (iii) seasonal repetition to derive a Bengaluru-specific tilt
-schedule; and (iv) direct comparison of empirical findings against computational model
-predictions to validate or correct existing frameworks for this location.
-
-Pending such multi-angle and multi-season validation, these findings offer a cautious but
-concrete preliminary recommendation for practitioners: rooftop PV installations in Bengaluru
-and similar tropical latitudes (12\degree{}--15\degree{}N) should consider tilt angles in the
-30\degree{}--40\degree{} range during the May--July summer season rather than defaulting to the
-conventional latitude-matched angle. This recommendation is supported by a measured 45.86\%
-energy yield advantage at 36\degree{} over 13\degree{} under field conditions, and by the
-irradiance-normalised efficiency analysis which demonstrates that this advantage is geometric
-in nature and not an atmospheric artefact. Installers adopting a seasonally adjusted tilt
-strategy---switching from a summer-optimised steep angle to a shallower winter angle---may
-achieve meaningful improvement in annual energy yield without additional hardware cost.
+The primary contribution of this work is to provide the first hardware-validated, thermally
+corrected tilt-angle dataset for Bengaluru---a data point currently absent from the
+literature---and to motivate the following replicated studies rather than to issue a
+practitioner recommendation. Future work should pursue: (i) simultaneous dual-panel
+logging under identical sky conditions, which is the minimum requirement to cleanly
+isolate the tilt-angle effect; (ii) a multi-angle sweep (5\degree{}--50\degree{}) to
+characterise the performance landscape more fully; (iii) seasonal repetition to assess
+whether any tilt advantage is consistent across the solar year; and (iv) direct
+comparison of empirical findings against computational model predictions to assess
+whether existing frameworks adequately capture diffuse irradiance contributions for
+this location. Tilt angles in the 30\degree{}--40\degree{} range may warrant further
+investigation pending such simultaneous validation---this study provides a preliminary
+empirical basis for that investigation, not a settled recommendation.
 
 \section*{Acknowledgements}
 The authors thank the IdeaLab at RVCE, Bengaluru, for facility access and project support.
