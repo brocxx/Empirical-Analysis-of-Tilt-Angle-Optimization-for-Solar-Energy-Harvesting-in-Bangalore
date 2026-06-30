@@ -303,6 +303,13 @@ of incident sunlight can be considered effectively constant across both experime
 this condition, lux provides a valid relative normalisation metric: inter-session and
 inter-angle efficiency comparisons remain self-consistent because any fixed photopic-to-
 radiometric conversion factor cancels algebraically in the ratio of Eq.~(\ref{eq:noreff}).
+This assumption holds for the photopic-to-radiometric conversion factor used in the
+normalisation ratio itself; it does not imply that the beam-to-diffuse composition of
+irradiance was identical on both days. As discussed in Section~\ref{sec:limitations},
+day-to-day differences in cloud cover or aerosol loading could still alter the diffuse
+fraction of incident light even when the broad spectral character of sunlight is otherwise
+similar, and this is treated as a limitation of the present design rather than a resolved
+confound.
 This is a known limitation of illuminance-based normalisation \cite{duffie2013} and does
 not invalidate inter-angle performance comparison under consistent spectral conditions.
 
@@ -497,8 +504,10 @@ Figures~\ref{fig:power13} and~\ref{fig:power36} show the full-day intraday power
 for both angles. Both exhibit the expected bell-shaped diurnal profile. At 13\degree{},
 power peaks early and declines through midday as the sun approaches near-vertical incidence,
 reducing the effective irradiance projection onto the low-angle panel. At 36\degree{}, the
-midday power profile is flatter and more sustained, confirming that the steeper inclination
-maintains closer alignment with the June sun's north-of-zenith arc at this latitude.
+midday power profile is flatter and more sustained, which is consistent with the steeper
+inclination maintaining closer alignment with the June sun's north-of-zenith arc at this
+latitude, though atmospheric differences between the two measurement days cannot be ruled
+out as a contributing factor.
 
 \begin{figure}[H]
   \centering
@@ -609,8 +618,8 @@ in beam-to-diffuse ratio between the two measurement days.
   \centering
   \includegraphics[width=\columnwidth]{power_36deg_midday_20260623.png}
   \caption{Power vs.\ time, 36\degree{} midday session. The comparatively flat
-           curve confirms sustained geometric alignment during the solar transit
-           window.}
+           curve is consistent with sustained geometric alignment during the solar
+           transit window.}
   \label{fig:p36mid}
 \end{figure}
 
@@ -627,8 +636,11 @@ in beam-to-diffuse ratio between the two measurement days.
   \centering
   \includegraphics[width=\columnwidth]{efficiency_36deg_midday_20260623.png}
   \caption{Normalised efficiency $\eta_{\text{rel}}$, 36\degree{} midday session.
-           The consistently elevated values relative to Fig.~\ref{fig:e13m} confirm
-           that the efficiency gap persists after removing irradiance variability.}
+           The consistently elevated values relative to Fig.~\ref{fig:e13m} are
+           consistent with the efficiency gap persisting after correcting for overall
+           irradiance level, though as noted in Section~\ref{sec:limitations} this
+           correction cannot account for beam-to-diffuse composition differences
+           between the two measurement days.}
   \label{fig:e36mid}
 \end{figure}
 
